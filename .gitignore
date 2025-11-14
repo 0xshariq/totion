@@ -1,5 +1,5 @@
 # Binary
-totion
+/totion
 
 # Build artifacts
 *.exe
@@ -20,6 +20,3 @@ Thumbs.db
 
 .env
 node_modules/
-
-*.md
-!README.md

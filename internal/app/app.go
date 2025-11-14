@@ -93,6 +93,7 @@ type Model struct {
 	translating       bool                    // Track if translation is in progress
 	previousState     ViewState               // Track previous state before language selector
 	currentUILanguage string                  // Current UI language code (e.g., "en", "es")
+	translationCache  map[string]string       // Cache for translated strings (key: "lang:text", value: "translation")
 }
 
 // New creates a new application model
@@ -112,11 +113,8 @@ func New() *Model {
 		lingoAPIKey = os.Getenv("LINGO_API_KEY")
 	}
 
-	// Initialize Lingo.dev client
-	lingoURL := os.Getenv("LINGO_BRIDGE_URL")
-	if lingoURL == "" {
-		lingoURL = "http://localhost:3000"
-	}
+	// Initialize Lingo.dev client with API key
+	lingoClient := lingo.NewClient(lingoAPIKey)
 
 	m := &Model{
 		storage:           storage.New(),
@@ -129,11 +127,12 @@ func New() *Model {
 		recentManager:     recent.NewRecentManager(configDir),
 		pinnedManager:     pinned.NewPinnedManager(configDir),
 		focusMode:         false,
-		lingoClient:       lingo.NewClient(lingoURL),
+		lingoClient:       lingoClient,
 		selectedLangIndex: 0,
 		translating:       false,
 		previousState:     ViewHome,
-		currentUILanguage: "en", // Default to English
+		currentUILanguage: "en", // Default to English,
+		translationCache:  make(map[string]string),
 	}
 
 	// Setup auto-save callback
@@ -220,6 +219,36 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, cmd
+}
+
+// t translates text to the current UI language using Lingo.dev API
+// Returns original text if translation fails or language is English
+func (m *Model) translate(text string) string {
+	// If English or no translation client, return original
+	if m.currentUILanguage == "en" || m.currentUILanguage == "" {
+		return text
+	}
+
+	if m.lingoClient == nil || !m.lingoClient.IsEnabled() {
+		return text
+	}
+
+	// Check cache first
+	cacheKey := m.currentUILanguage + ":" + text
+	if cached, ok := m.translationCache[cacheKey]; ok {
+		return cached
+	}
+
+	// Translate using Lingo.dev API
+	translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, true)
+	if err != nil {
+		// Return original on error
+		return text
+	}
+
+	// Cache the translation
+	m.translationCache[cacheKey] = translated
+	return translated
 }
 
 // All handler functions are defined in handlers.go

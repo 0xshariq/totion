@@ -30,12 +30,14 @@ func GetGettingStarted() string {
 		textStyle.Render("6. ORGANIZE WITH FOLDERS:") + "\n" +
 		textStyle.Render("   • Press B for notebooks menu") + "\n" +
 		textStyle.Render("   • Create folders to organize notes") + "\n" +
-		textStyle.Render("   • Use #tags for cross-cutting organization") + "\n\n" +
+		textStyle.Render("   • Use # for cross-cutting organization") + "\n\n" +
 		successStyle.Render("PRODUCTIVITY TIPS:") + "\n" +
-		textStyle.Render("  • Pin favorites with Alt+P (max 10)") + "\n" +
-		textStyle.Render("  • Use Ctrl+F for focus mode when writing") + "\n" +
-		textStyle.Render("  • Search across notes with Ctrl+/") + "\n" +
-		textStyle.Render("  • Add #tags in notes for organization") + "\n\n" +
+		textStyle.Render("  • Pin favorites with Alt+P (max 10 pinned notes)") + "\n" +
+		textStyle.Render("  • Use Alt+F for focus mode (distraction-free writing)") + "\n" +
+		textStyle.Render("  • Search across notes with Ctrl+/ (full-text search)") + "\n" +
+		textStyle.Render("  • Add # in notes for cross-cutting organization") + "\n" +
+		textStyle.Render("  • Use Alt+T to change UI language (works from any screen)") + "\n" +
+		textStyle.Render("  • Auto-save runs every 30 seconds in editor") + "\n\n" +
 		textStyle.Render("STORAGE:") + "\n" +
 		textStyle.Render("  All notes are saved in: ~/.totion/") + "\n" +
 		textStyle.Render("  Format: .md (Markdown) or .txt (Plain Text)") + "\n\n" +

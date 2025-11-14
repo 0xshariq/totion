@@ -19,7 +19,7 @@ func GetKeyboardShortcuts() string {
 		textStyle.Render("  Ctrl+S      Save & close (auto-save enabled)") + "\n\n" +
 		textStyle.Render("SEARCH & ORGANIZATION:") + "\n" +
 		textStyle.Render("  Ctrl+/      Full-text search across notes") + "\n" +
-		textStyle.Render("  #tag        Type tags in notes (e.g., #work)") + "\n" +
+		textStyle.Render("  #           Type tags in notes (e.g., #work)") + "\n" +
 		textStyle.Render("  /           Search/filter notes in list") + "\n" +
 		textStyle.Render("  B           Notebooks (folder organization)") + "\n\n" +
 		textStyle.Render("NAVIGATION:") + "\n" +
@@ -45,10 +45,14 @@ func GetKeyboardShortcuts() string {
 		textStyle.Render("  • Pinned notes show 📌 indicator") + "\n" +
 		textStyle.Render("  • View pinned notes on home screen") + "\n" +
 		textStyle.Render("  • Maximum 10 pinned notes allowed") + "\n\n" +
-		successStyle.Render("🌐 TRANSLATION:") + "\n" +
-		textStyle.Render("  • Press Alt+T in editor to translate note") + "\n" +
-		textStyle.Render("  • Support for 9 languages: ES, FR, DE, JA, ZH, KO, PT, IT, RU") + "\n" +
-		textStyle.Render("  • Preserves markdown formatting") + "\n" +
-		textStyle.Render("  • Requires LINGODOTDEV_API_KEY (get free key at lingo.dev)") + "\n\n" +
+		successStyle.Render("🌐 UI TRANSLATION:") + "\n" +
+		textStyle.Render("  • Press Alt+T from ANY screen (not just homepage)") + "\n" +
+		textStyle.Render("  • Translates entire UI: menus, labels, help text") + "\n" +
+		textStyle.Render("  • Your notes stay in original language (not translated)") + "\n" +
+		textStyle.Render("  • Languages: Spanish, French, German, Japanese, Chinese,") + "\n" +
+		textStyle.Render("    Korean, Portuguese, Italian, Russian") + "\n" +
+		textStyle.Render("  • Setup: Add LINGODOTDEV_API_KEY to .env file") + "\n" +
+		textStyle.Render("  • Get free API key at: https://lingo.dev") + "\n" +
+		textStyle.Render("  • Set default language: LINGO_DEFAULT_LOCALE=es (optional)") + "\n\n" +
 		dimStyle.Render("Press Esc to go back")
 }

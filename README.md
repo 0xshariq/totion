@@ -24,7 +24,7 @@ A powerful, fast, and lightweight note-taking application for your terminal, bui
 - **Auto-Save**: Automatically saves notes every 30 seconds while editing
 - **Recently Opened**: Quick access to your last 10 opened notes
 - **Custom Templates**: Save your own note templates for reuse
-- **Translation**: Translate notes to 9 languages (Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian)
+- **Multi-Language UI**: Change interface language to 9+ languages with real-time translation powered by Lingo.dev (Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian)
 
 ### Available Templates (Ctrl+T)
 
@@ -80,6 +80,7 @@ Comprehensive help system with organized topics and easy navigation.
 - Go 1.21 or higher
 - Git (optional, for version control features)
 - wkhtmltopdf (required for PDF export)
+- Lingo.dev API key (optional, for UI translation feature)
 
 ```bash
 go install github.com/0xshariq/totion
@@ -156,6 +157,7 @@ make clean
 | `B`             | Notebooks/folders manager                              |
 | `Alt+P`         | Pin/unpin note                                         |
 | `/`             | Search notes                                           |
+| `Alt+T`         | Change UI language (translate interface)               |
 | `Q`             | Quit application                                       |
 
 #### 📋 List View Shortcuts
@@ -179,18 +181,19 @@ make clean
 | `Esc`         | Discard changes and close editor     |
 | Type normally | Edit note content                    |
 
-#### 🌐 Translation (Press Alt+T in editor)
+#### 🌐 UI Language Translation (Press Alt+T anywhere)
 
-Translate your notes to 9 different languages instantly!
+Change the entire interface language with real-time translation powered by Lingo.dev!
 
 | Key      | Action                                     |
 | -------- | ------------------------------------------ |
 | `Alt+T`  | Open language selector                     |
 | `↑` `↓`  | Navigate through available languages       |
-| `Enter`  | Translate to selected language             |
-| `Esc`    | Cancel translation                         |
+| `Enter`  | Change UI language to selected             |
+| `Esc`    | Cancel language selection                  |
 
 **Supported Languages:**
+
 - 🇪🇸 Spanish (Español)
 - 🇫🇷 French (Français)  
 - 🇩🇪 German (Deutsch)
@@ -201,7 +204,23 @@ Translate your notes to 9 different languages instantly!
 - 🇮🇹 Italian (Italiano)
 - 🇷🇺 Russian (Русский)
 
-**Setup:** Set `LINGODOTDEV_API_KEY` environment variable. Get your free API key at [lingo.dev](https://lingo.dev)
+**Features:**
+- Translates ALL UI text: menus, buttons, help sections, and keyboard shortcuts
+- Does NOT translate your note content - only the interface
+- Real-time translation using Lingo.dev API
+- Translation cache for fast performance
+- Works from any screen (home, editor, help, etc.)
+
+**Setup:**
+
+1. Get a free API key from [lingo.dev](https://lingo.dev)
+2. Create a `.env` file in your totion directory:
+   ```bash
+   LINGODOTDEV_API_KEY=your_api_key_here
+   ```
+3. Press `Alt+T` to start translating!
+
+**Note:** If API key is not set, the app will work fine in English.
 
 #### 📤 Export Menu (Press Alt+E from home)
 

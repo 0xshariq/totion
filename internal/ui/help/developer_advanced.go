@@ -15,7 +15,7 @@ func GetDeveloperAdvanced() string {
 		successStyle.Render("PACKAGE: internal/features/tags") + "\n\n" +
 		codeStyle.Render("  tm := tags.NewTagManager(vaultDir, configDir)") + "\n\n" +
 		dimStyle.Render("  • ExtractTags(content) []string") + "\n" +
-		dimStyle.Render("    Extract #tags from text") + "\n\n" +
+		dimStyle.Render("    Extract # from text") + "\n\n" +
 		dimStyle.Render("  • RebuildIndex() error") + "\n" +
 		dimStyle.Render("    Scan all notes and build index") + "\n\n" +
 		dimStyle.Render("  • GetNotesByTag(tag) []string") + "\n" +

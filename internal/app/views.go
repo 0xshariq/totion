@@ -28,16 +28,16 @@ func (m *Model) View() string {
 
 	switch m.state {
 	case ViewHome:
-		keysTitle = "📌 Quick Actions"
+		keysTitle = m.translate("🎬 Quick Actions")
 		keys = styles.KeysStyle.Render(
-			"Ctrl+N: Create New Note  •  Ctrl+L: View All Notes  •  Ctrl+H: Help  •  Q: Quit\n" +
-				"Alt+T: Change UI Language  •  P: Themes  •  S: Statistics  •  B: Notebooks",
+			m.translate("Create New Note") + "  •  " + m.translate("View All Notes") + "  •  " + m.translate("Help") + "  •  " + m.translate("Quit") + "\n" +
+				m.translate("Change UI Language") + "  •  " + m.translate("Themes") + "  •  " + m.translate("Statistics") + "  •  " + m.translate("Notebooks"),
 		)
 	case ViewList:
-		keysTitle = "📋 Note List"
+		keysTitle = m.translate("📋 Note List")
 		keys = styles.KeysStyle.Render(
-			"↑↓: Navigate Notes  •  Enter: Open Selected  •  Ctrl+D: Delete Note\n" +
-				"/: Search Notes  •  Esc: Back to Home",
+			m.translate("Navigate Notes") + "  •  " + m.translate("Open Selected") + "  •  " + m.translate("Delete Note") + "\n" +
+				m.translate("Search Notes") + "  •  " + m.translate("Back to Home"),
 		)
 	case ViewEditor:
 		editorInfo := ""
@@ -50,10 +50,10 @@ func (m *Model) View() string {
 				fmt.Sprintf("Editing: %s %s%s", m.currentNote.Format.GetIcon(), m.currentNote.Name, pinStatus),
 			)
 		}
-		keysTitle = "✏️  Editor Mode"
+		keysTitle = m.translate("✏️  Editor Mode")
 		keys = styles.KeysStyle.Render(
-			"Ctrl+S: Save & Close  •  Alt+F: Focus Mode  •  Alt+P: Pin/Unpin\n" +
-				"Alt+L: Wiki Links  •  Esc: Minimize Editor",
+			m.translate("Save and Close") + "  •  " + m.translate("Focus Mode") + "  •  " + m.translate("Pin/Unpin") + "\n" +
+				m.translate("Wiki Links") + "  •  " + m.translate("Minimize Editor"),
 		)
 		if editorInfo != "" {
 			keys = editorInfo + "\n" + keys
@@ -118,65 +118,65 @@ func (m *Model) View() string {
 		pinnedView := m.renderPinnedNotes()
 
 		homeContent := pinnedView +
-			styles.TitleStyle.Render("💡 WHAT IS TOTION?") + "\n" +
-			styles.InfoStyle.Render("Totion is a powerful terminal-based note-taking application that helps you:") + "\n" +
-			styles.MenuItemStyle.Render("  • Capture ideas instantly without leaving your terminal workflow") + "\n" +
-			styles.MenuItemStyle.Render("  • Organize notes with notebooks, tags, and wiki-style links") + "\n" +
-			styles.MenuItemStyle.Render("  • Stay focused with distraction-free focus mode") + "\n" +
-			styles.MenuItemStyle.Render("  • Track your productivity with built-in analytics") + "\n" +
-			styles.MenuItemStyle.Render("  • Keep everything in sync with Git integration") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("💡 WHAT IS TOTION?")) + "\n" +
+			styles.InfoStyle.Render(m.translate("Totion is a powerful terminal-based note-taking application that helps you:")) + "\n" +
+			styles.MenuItemStyle.Render("  • "+m.translate("Capture ideas instantly without leaving your terminal workflow")) + "\n" +
+			styles.MenuItemStyle.Render("  • "+m.translate("Organize notes with notebooks, tags, and wiki-style links")) + "\n" +
+			styles.MenuItemStyle.Render("  • "+m.translate("Stay focused with distraction-free focus mode")) + "\n" +
+			styles.MenuItemStyle.Render("  • "+m.translate("Track your productivity with built-in analytics")) + "\n" +
+			styles.MenuItemStyle.Render("  • "+m.translate("Keep everything in sync with Git integration")) + "\n\n" +
 
-			styles.TitleStyle.Render("🎯 QUICK START GUIDE") + "\n" +
-			styles.InfoStyle.Render("Get started in seconds:") + "\n" +
-			styles.SuccessStyle.Render("  • Ctrl+N → Create your first note") + "\n" +
-			styles.SuccessStyle.Render("  • Ctrl+L → View all your notes") + "\n" +
-			styles.SuccessStyle.Render("  • Ctrl+H → Open detailed help") + "\n" +
-			styles.SuccessStyle.Render("  • Q → Quit application") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("🎯 QUICK START GUIDE")) + "\n" +
+			styles.InfoStyle.Render(m.translate("Get started in seconds:")) + "\n" +
+			styles.SuccessStyle.Render("  • Ctrl+N → "+m.translate("Create your first note")) + "\n" +
+			styles.SuccessStyle.Render("  • Ctrl+L → "+m.translate("View all your notes")) + "\n" +
+			styles.SuccessStyle.Render("  • Ctrl+H → "+m.translate("Open detailed help")) + "\n" +
+			styles.SuccessStyle.Render("  • Q → "+m.translate("Quit application")) + "\n\n" +
 
-			styles.TitleStyle.Render("📝 CREATING NOTES") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+N → Create new note with custom name") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+D → Daily journal (auto-dated)") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+Q → Quick scratch pad (temporary notes)") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+T → Use pre-made templates (meetings, todos, etc.)") + "\n" +
-			styles.MenuItemStyle.Render("  • B → Organize notes into notebooks") + "\n" +
-			styles.MenuItemStyle.Render("  • #tag → Tag your notes for easy filtering") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+T → Change UI language (English, Spanish, French, etc.)") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("📝 CREATING NOTES")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+N → "+m.translate("Create new note with custom name")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+D → "+m.translate("Daily journal (auto-dated)")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+Q → "+m.translate("Quick scratch pad (temporary notes)")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+T → "+m.translate("Use pre-made templates (meetings, todos, etc.)")) + "\n" +
+			styles.MenuItemStyle.Render("  • B → "+m.translate("Organize notes into notebooks")) + "\n" +
+			styles.MenuItemStyle.Render("  • # → "+m.translate("Tag your notes for easy filtering")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+T → "+m.translate("Change UI language (English, Spanish, French, etc.)")) + "\n\n" +
 
-			styles.TitleStyle.Render("✏️  EDITING & FORMATTING") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+S → Save your work and close editor") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+F → Enter focus mode (minimal distractions)") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+P → Pin important notes to top") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+L → Create [[wiki links]] to other notes") + "\n" +
-			styles.MenuItemStyle.Render("  • P → Change color themes") + "\n" +
-			styles.MenuItemStyle.Render("  • / → Search within notes") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("✏️  EDITING & FORMATTING")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+S → "+m.translate("Save your work and close editor")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+F → "+m.translate("Enter focus mode (minimal distractions)")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+P → "+m.translate("Pin important notes to top")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+L → "+m.translate("Create [[wiki links]] to other notes")) + "\n" +
+			styles.MenuItemStyle.Render("  • P → "+m.translate("Change color themes")) + "\n" +
+			styles.MenuItemStyle.Render("  • / → "+m.translate("Search within notes")) + "\n\n" +
 
-			styles.TitleStyle.Render("📊 VIEWING & ANALYZING") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+L → Browse all notes in list view") + "\n" +
-			styles.MenuItemStyle.Render("  • S → View statistics (note count, word count, trends)") + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+/ → Full-text search across all notes") + "\n" +
-			styles.MenuItemStyle.Render("  • ? → Open help menu anytime") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("📊 VIEWING & ANALYZING")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+L → "+m.translate("Browse all notes in list view")) + "\n" +
+			styles.MenuItemStyle.Render("  • S → "+m.translate("View statistics (note count, word count, trends)")) + "\n" +
+			styles.MenuItemStyle.Render("  • Ctrl+/ → "+m.translate("Full-text search across all notes")) + "\n" +
+			styles.MenuItemStyle.Render("  • ? → "+m.translate("Open help menu anytime")) + "\n\n" +
 
-			styles.TitleStyle.Render("💾 SYNC & BACKUP") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+E → Export notes (HTML, PDF, Markdown)") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+I → Import from Notion, Markdown, etc.") + "\n" +
-			styles.MenuItemStyle.Render("  • G → Git integration for version control") + "\n" +
-			styles.MenuItemStyle.Render("  • Alt+Y → Sync with cloud storage") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("💾 SYNC & BACKUP")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+E → "+m.translate("Export notes (HTML, PDF, Markdown)")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+I → "+m.translate("Import from Notion, Markdown, etc.")) + "\n" +
+			styles.MenuItemStyle.Render("  • G → "+m.translate("Git integration for version control")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+Y → "+m.translate("Sync with cloud storage")) + "\n\n" +
 
-			styles.TitleStyle.Render("✨ WHY CHOOSE TOTION?") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Lightning fast - No loading times, instant startup") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Privacy first - All data stored locally on your machine") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Works offline - No internet required") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Auto-save - Never lose your work") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Keyboard driven - Maximum productivity") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Markdown support - Beautiful formatting") + "\n" +
-			styles.SuccessStyle.Render("  ✓ Cross-platform - Works on Linux, Mac, Windows") + "\n\n" +
+			styles.TitleStyle.Render(m.translate("✨ WHY CHOOSE TOTION?")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Lightning fast - No loading times, instant startup")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Privacy first - All data stored locally on your machine")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Works offline - No internet required")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Auto-save - Never lose your work")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Keyboard driven - Maximum productivity")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Markdown support - Beautiful formatting")) + "\n" +
+			styles.SuccessStyle.Render("  ✓ "+m.translate("Cross-platform - Works on Linux, Mac, Windows")) + "\n\n" +
 
-			styles.WarningStyle.Render("  💡 TIP: Press Ctrl+H for complete documentation and tutorials") + "\n"
+			styles.WarningStyle.Render("  💡 "+m.translate("TIP: Press Ctrl+H for complete documentation and tutorials")) + "\n"
 
 		// Set viewport content and render
 		m.homeViewport.SetContent(homeContent)
 		view = m.homeViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll to navigate • Page Up/Down for faster scrolling")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll to navigate • Page Up/Down for faster scrolling"))
 	case ViewList:
 		view = m.list.View()
 	case ViewEditor:
@@ -265,6 +265,8 @@ func (m *Model) View() string {
 				helpContent = help.GetDeveloperNotebooks()
 			case "0-9":
 				helpContent = help.GetDeveloperBestPractices()
+			case "t", "T":
+				helpContent = help.GetTranslationGuide()
 			default:
 				helpContent = help.GetHelpMenu()
 			}
@@ -580,7 +582,8 @@ func (m *Model) renderLanguageSelector() string {
 			style = styles.HighlightStyle
 		}
 
-		sb.WriteString(style.Render(fmt.Sprintf("%s%s\n", marker, lang.Name)))
+		// Format: "→ ES  Spanish (Español)" with proper spacing
+		sb.WriteString(style.Render(fmt.Sprintf("%s%-30s\n", marker, lang.Name)))
 	}
 
 	sb.WriteString("\n")

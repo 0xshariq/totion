@@ -216,13 +216,13 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 			return true, m, nil
 		}
 
-	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
+	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "t", "T":
 		if m.state == ViewHelp && m.helpTopic == "" {
 			// Select main help topic
 			m.helpTopic = msg.String()
 			return true, m, nil
 		}
-		// Developer submenu uses 1-7
+		// Developer submenu uses 1-9
 		if m.state == ViewHelp && m.helpTopic == "0" {
 			m.helpTopic = "0-" + msg.String() // e.g., "0-1", "0-2", etc.
 			return true, m, nil
@@ -1066,15 +1066,15 @@ type Language struct {
 // getAvailableLanguages returns the list of supported translation languages
 func getAvailableLanguages() []Language {
 	return []Language{
-		{"es", "🇪🇸 Spanish (Español)"},
-		{"fr", "🇫🇷 French (Français)"},
-		{"de", "🇩🇪 German (Deutsch)"},
-		{"ja", "🇯🇵 Japanese (日本語)"},
-		{"zh", "🇨🇳 Chinese (中文)"},
-		{"ko", "🇰🇷 Korean (한국어)"},
-		{"pt", "🇵�� Portuguese (Português)"},
-		{"it", "🇮🇹 Italian (Italiano)"},
-		{"ru", "🇷🇺 Russian (Русский)"},
+		{"es", "ES  Spanish (Español)"},
+		{"fr", "FR  French (Français)"},
+		{"de", "DE  German (Deutsch)"},
+		{"ja", "JP  Japanese (日本語)"},
+		{"zh", "CN  Chinese (中文)"},
+		{"ko", "KR  Korean (한국어)"},
+		{"pt", "PT  Portuguese (Português)"},
+		{"it", "IT  Italian (Italiano)"},
+		{"ru", "RU  Russian (Русский)"},
 	}
 }
 
@@ -1101,11 +1101,7 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 	// Return to previous state
 	m.state = m.previousState
 	m.statusMessage = styles.SuccessStyle.Render(
-		fmt.Sprintf("✓ UI language set to %s - All interface text will now be displayed in this language", targetLang.Name))
-
-	// Note: The actual translation will happen in the View() method
-	// by checking m.currentUILanguage and using m.lingoClient.TranslateText()
-	// for each UI string when it's not English
+		fmt.Sprintf("✓ UI language set to %s - All interface text will now be translated", targetLang.Name))
 
 	return true, m, nil
 }
