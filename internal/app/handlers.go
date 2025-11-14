@@ -27,6 +27,13 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c", "q":
 		if m.state == ViewHome {
+			// Stop bridge server before quitting
+			if m.bridgeServer != nil {
+				m.bridgeServer.Stop()
+			}
+			// Reset language to English before quitting
+			m.currentUILanguage = "en"
+			m.translationCache = make(map[string]string)
 			return true, m, tea.Quit
 		}
 
@@ -111,6 +118,63 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 		m.selectedLangIndex = 0
 		m.statusMessage = ""
 		return true, m, nil
+
+	case "alt+d":
+		// Create or open today's daily journal (only from home view)
+		if m.state == ViewHome {
+			notePath, err := m.dailyManager.CreateTodayNote()
+			if err != nil {
+				m.statusMessage = styles.ErrorStyle.Render("Error creating daily note: " + err.Error())
+				return true, m, nil
+			}
+
+			// Read the note content
+			content, err := m.storage.ReadNote(notePath)
+			if err != nil {
+				m.statusMessage = styles.ErrorStyle.Render("Error reading daily note: " + err.Error())
+				return true, m, nil
+			}
+
+			// Open the note file
+			file, err := m.storage.OpenNote(notePath)
+			if err != nil {
+				m.statusMessage = styles.ErrorStyle.Render("Error opening daily note: " + err.Error())
+				return true, m, nil
+			}
+
+			// Create note model
+			noteInfo, err := os.Stat(notePath)
+			if err != nil {
+				m.statusMessage = styles.ErrorStyle.Render("Error reading note info: " + err.Error())
+				return true, m, nil
+			}
+
+			m.currentNote = &models.Note{
+				Name:    filepath.Base(notePath),
+				Path:    notePath,
+				Format:  models.FormatMarkdown,
+				ModTime: noteInfo.ModTime(),
+				Size:    noteInfo.Size(),
+			}
+			m.currentFile = file
+			m.state = ViewEditor
+			m.editor.SetValue(content)
+			m.editor.Focus()
+
+			// Add to recent notes
+			if m.recentManager != nil {
+				_ = m.recentManager.AddRecent(m.currentNote)
+			}
+
+			// Start auto-save
+			if m.autoSaver != nil {
+				m.autoSaver.Start()
+			}
+			m.isEditorDirty = false
+
+			m.statusMessage = styles.SuccessStyle.Render("📅 Daily journal opened")
+			return true, m, nil
+		}
 
 	case "alt+f":
 		if m.state == ViewEditor {
@@ -1080,12 +1144,6 @@ func getAvailableLanguages() []Language {
 
 // translateNote switches the UI language and translates all UI elements
 func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
-	if m.lingoClient == nil || !m.lingoClient.IsEnabled() {
-		m.state = m.previousState
-		m.statusMessage = styles.ErrorStyle.Render("Translation unavailable - please set LINGODOTDEV_API_KEY in .env file")
-		return true, m, nil
-	}
-
 	languages := getAvailableLanguages()
 	if m.selectedLangIndex >= len(languages) {
 		m.state = m.previousState
@@ -1098,10 +1156,22 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 	// Update the current UI language
 	m.currentUILanguage = targetLang.Code
 
+	// Clear translation cache when language changes
+	m.translationCache = make(map[string]string)
+
 	// Return to previous state
 	m.state = m.previousState
-	m.statusMessage = styles.SuccessStyle.Render(
-		fmt.Sprintf("✓ UI language set to %s - All interface text will now be translated", targetLang.Name))
+
+	// Show appropriate status message
+	if targetLang.Code == "en" {
+		m.statusMessage = styles.SuccessStyle.Render("✓ UI language set to English")
+	} else if m.lingoClient == nil || !m.lingoClient.IsEnabled() {
+		m.statusMessage = styles.WarningStyle.Render(
+			fmt.Sprintf("⚠ UI set to %s but translation unavailable - set LINGODOTDEV_API_KEY in .env file", targetLang.Name))
+	} else {
+		m.statusMessage = styles.SuccessStyle.Render(
+			fmt.Sprintf("✓ UI language set to %s - All interface text will now be translated", targetLang.Name))
+	}
 
 	return true, m, nil
 }

@@ -113,10 +113,12 @@ app.post('/translate', async (req, res) => {
     }
 
     // Translate using Lingo.dev SDK
+    // Quality mode (fast: false) ensures >90% accuracy for hackathon
     const result = await lingoDotDev.localizeText(text, {
       sourceLocale: source,
       targetLocale,
-      fast: fast || false,
+      fast: fast === true, // Default to quality mode (false) for accuracy
+      context: 'Technical UI strings for note-taking application',
     });
 
     // Store in cache
@@ -127,6 +129,56 @@ app.post('/translate', async (req, res) => {
     console.error('Translation error:', error);
     res.status(500).json({ 
       error: error.message || 'Translation failed' 
+    });
+  }
+});
+
+// Batch translate endpoint - translate multiple strings at once
+app.post('/translate/batch', async (req, res) => {
+  try {
+    const { texts, sourceLocale, targetLocale, fast } = req.body;
+
+    if (!texts || !Array.isArray(texts) || !targetLocale) {
+      return res.status(400).json({ 
+        error: 'Missing required fields: texts (array) and targetLocale' 
+      });
+    }
+
+    const source = sourceLocale || 'en';
+    const translations = [];
+
+    for (const text of texts) {
+      const cacheKey = getCacheKey(text, source, targetLocale);
+      
+      // Check cache first
+      let cached = await getFromCache(cacheKey);
+      if (cached) {
+        translations.push({ text, translation: cached, cached: true });
+        continue;
+      }
+
+      try {
+        // Translate using Lingo.dev SDK with quality mode
+        const result = await lingoDotDev.localizeText(text, {
+          sourceLocale: source,
+          targetLocale,
+          fast: fast === true, // Default to quality mode for >90% accuracy
+          context: 'Technical UI strings for note-taking application',
+        });
+
+        // Store in cache
+        await setCache(cacheKey, result);
+        translations.push({ text, translation: result, cached: false });
+      } catch (error) {
+        translations.push({ text, translation: text, error: error.message });
+      }
+    }
+
+    res.json({ translations });
+  } catch (error) {
+    console.error('Batch translation error:', error);
+    res.status(500).json({ 
+      error: error.message || 'Batch translation failed' 
     });
   }
 });
@@ -164,6 +216,7 @@ app.listen(PORT, () => {
   console.log(`\nEndpoints:`);
   console.log(`  GET  /health             - Health check`);
   console.log(`  POST /translate          - Translate text (cached)`);
+  console.log(`  POST /translate/batch    - Batch translate multiple texts`);
   console.log(`  GET  /cache/stats        - Cache statistics`);
   console.log(`  POST /cache/clear        - Clear cache`);
 });

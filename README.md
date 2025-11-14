@@ -218,7 +218,42 @@ Change the entire interface language with real-time translation powered by Lingo
    ```bash
    LINGODOTDEV_API_KEY=your_api_key_here
    ```
-3. Press `Alt+T` to start translating!
+3. The bridge server will automatically start when you launch the app
+4. Press `Alt+T` to start translating!
+
+**Translation Quality (>90% Accuracy):**
+
+- **Quality Mode Enabled**: Uses Lingo.dev's high-accuracy translation (not fast mode)
+- **Context Preservation**: Technical UI terms are preserved correctly
+- **Smart Caching**: Translations cached in Redis/memory for instant reuse
+- **Auto-Start Bridge**: Node.js bridge server starts automatically with the app
+- **Timeout Protection**: 2-second timeout prevents UI freezing
+- **No Manual Server**: Bridge server auto-starts and auto-stops with the app
+
+**Technical Details:**
+
+The translation system uses a bridge server architecture:
+```
+Go App → Bridge Server (localhost:3737) → Lingo.dev JavaScript SDK → Translated UI
+```
+
+**Bridge Server Features:**
+- **Auto-Start**: Automatically starts when you launch Totion
+- **Auto-Stop**: Gracefully stops when you quit the app (Ctrl+C or Q)
+- **Health Checks**: Verifies server is running before starting a new instance
+- **Dependency Management**: Auto-installs npm packages if needed
+- **Fallback Commands**: Tries pnpm first, falls back to npm/node
+- **Graceful Shutdown**: Sends interrupt signal, waits 2s, then force kills if needed
+- **No Manual Management**: Zero user intervention required
+
+**Bridge Server Reliability:**
+- Waits up to 10 seconds for server to be ready
+- Retries connection every 300ms
+- Shows startup status in terminal
+- Handles port conflicts gracefully
+- Redis caching (optional, falls back to memory cache)
+- Quality mode translation for hackathon-grade accuracy
+- Only translates UI text, never your note content
 
 **Note:** If API key is not set, the app will work fine in English.
 

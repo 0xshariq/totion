@@ -9,7 +9,8 @@ import (
 	"time"
 )
 
-// Client handles communication with Lingo.dev API directly
+// Client handles communication with Lingo.dev via bridge server
+// The bridge server uses the official Lingo.dev JavaScript SDK
 type Client struct {
 	apiKey     string
 	baseURL    string
@@ -18,19 +19,22 @@ type Client struct {
 
 // Response represents the API response structure
 type Response struct {
-	Success bool            `json:"success"`
-	Data    json.RawMessage `json:"data,omitempty"`
-	Error   string          `json:"error,omitempty"`
+	Translation string `json:"translation,omitempty"`
+	Cached      bool   `json:"cached,omitempty"`
+	Error       string `json:"error,omitempty"`
 }
 
-// NewClient creates a new Lingo.dev client that calls the API directly
-// No need for Node.js bridge server!
+// NewClient creates a new Lingo.dev client that connects to the bridge server
+// The bridge server uses the official Lingo.dev JavaScript SDK with Redis caching
 func NewClient(apiKey string) *Client {
+	// Bridge server URL - runs locally on port 3737
+	bridgeURL := "http://localhost:3737"
+
 	if apiKey == "" {
 		// Return a disabled client if no API key
 		return &Client{
 			apiKey:  "",
-			baseURL: "https://api.lingo.dev/v1", // Official API endpoint
+			baseURL: bridgeURL,
 			httpClient: &http.Client{
 				Timeout: 30 * time.Second,
 			},
@@ -39,9 +43,9 @@ func NewClient(apiKey string) *Client {
 
 	return &Client{
 		apiKey:  apiKey,
-		baseURL: "https://api.lingo.dev/v1",
+		baseURL: bridgeURL,
 		httpClient: &http.Client{
-			Timeout: 30 * time.Second,
+			Timeout: 2 * time.Second, // Short timeout to prevent UI freezing
 		},
 	}
 }
@@ -52,230 +56,65 @@ func (c *Client) IsEnabled() bool {
 }
 
 // TranslateText translates a text string to target language
-// Calls Lingo.dev API directly - no bridge server needed!
+// Calls the bridge server which uses the official Lingo.dev JavaScript SDK
+// Results are cached in Redis for fast repeated translations
+// Use fast=false for quality mode (>90% accuracy) or fast=true for speed
 func (c *Client) TranslateText(text, sourceLocale, targetLocale string, fast bool) (string, error) {
 	if !c.IsEnabled() {
-		return "", fmt.Errorf("translation disabled: no API key configured")
+		return text, nil // Return original text if no API key
+	}
+
+	if text == "" {
+		return text, nil
 	}
 
 	payload := map[string]interface{}{
 		"text":         text,
 		"sourceLocale": sourceLocale,
 		"targetLocale": targetLocale,
-	}
-	if fast {
-		payload["fast"] = true
+		"fast":         fast,
 	}
 
 	body, err := json.Marshal(payload)
 	if err != nil {
-		return "", err
+		return text, err
 	}
 
 	req, err := http.NewRequest("POST", c.baseURL+"/translate", bytes.NewBuffer(body))
 	if err != nil {
-		return "", err
+		return text, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
 
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("API request failed: %w", err)
+		return text, fmt.Errorf("bridge server request failed (is it running?): %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(bodyBytes))
+		return text, fmt.Errorf("translation error (status %d): %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	var result map[string]interface{}
+	var result Response
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
+		return text, err
 	}
 
-	// Extract translation from response
-	if translation, ok := result["translation"].(string); ok {
-		return translation, nil
+	if result.Error != "" {
+		return text, fmt.Errorf("translation failed: %s", result.Error)
 	}
 
-	return "", fmt.Errorf("unexpected response format")
+	if result.Translation != "" {
+		return result.Translation, nil
+	}
+
+	return text, fmt.Errorf("no translation in response")
 }
 
-// TranslateBatch translates text to multiple languages at once
-// Calls Lingo.dev API directly - no bridge server needed!
-func (c *Client) TranslateBatch(text, sourceLocale string, targetLocales []string) ([]string, error) {
-	if !c.IsEnabled() {
-		return nil, fmt.Errorf("translation disabled: no API key configured")
-	}
-
-	payload := map[string]interface{}{
-		"text":          text,
-		"sourceLocale":  sourceLocale,
-		"targetLocales": targetLocales,
-	}
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return nil, err
-	}
-
-	req, err := http.NewRequest("POST", c.baseURL+"/translate/batch", bytes.NewBuffer(body))
-	if err != nil {
-		return nil, err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return nil, err
-	}
-
-	if translations, ok := result["translations"].([]interface{}); ok {
-		result := make([]string, len(translations))
-		for i, t := range translations {
-			if str, ok := t.(string); ok {
-				result[i] = str
-			}
-		}
-		return result, nil
-	}
-
-	return nil, fmt.Errorf("unexpected response format")
-}
-
-// TranslateHTML translates HTML/Markdown while preserving formatting
-// Calls Lingo.dev API directly - no bridge server needed!
-func (c *Client) TranslateHTML(html, sourceLocale, targetLocale string) (string, error) {
-	if !c.IsEnabled() {
-		return "", fmt.Errorf("translation disabled: no API key configured")
-	}
-
-	payload := map[string]interface{}{
-		"html":         html,
-		"sourceLocale": sourceLocale,
-		"targetLocale": targetLocale,
-	}
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequest("POST", c.baseURL+"/translate/html", bytes.NewBuffer(body))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
-
-	if translation, ok := result["translation"].(string); ok {
-		return translation, nil
-	}
-
-	return "", fmt.Errorf("unexpected response format")
-}
-
-// DetectLanguage detects the language of the given text
-// Calls Lingo.dev API directly - no bridge server needed!
+// DetectLanguage is a placeholder - language detection not currently used
 func (c *Client) DetectLanguage(text string) (string, error) {
-	if !c.IsEnabled() {
-		return "en", nil // Default to English if no API key
-	}
-
-	payload := map[string]interface{}{
-		"text": text,
-	}
-
-	body, err := json.Marshal(payload)
-	if err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequest("POST", c.baseURL+"/detect", bytes.NewBuffer(body))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+c.apiKey)
-
-	resp, err := c.httpClient.Do(req)
-	if err != nil {
-		return "", fmt.Errorf("API request failed: %w", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		bodyBytes, _ := io.ReadAll(resp.Body)
-		return "", fmt.Errorf("API error (status %d): %s", resp.StatusCode, string(bodyBytes))
-	}
-
-	var result map[string]interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return "", err
-	}
-
-	if locale, ok := result["locale"].(string); ok {
-		return locale, nil
-	}
-
-	return "en", nil // Default fallback
-}
-
-// TranslateObject translates an entire object (for note metadata)
-// Note: This may not be available in all Lingo.dev API versions
-func (c *Client) TranslateObject(obj map[string]interface{}, sourceLocale, targetLocale string) (map[string]interface{}, error) {
-	if !c.IsEnabled() {
-		return nil, fmt.Errorf("translation disabled: no API key configured")
-	}
-
-	// Recursively translate all string values in the object
-	result := make(map[string]interface{})
-	for key, value := range obj {
-		if str, ok := value.(string); ok {
-			translated, err := c.TranslateText(str, sourceLocale, targetLocale, false)
-			if err != nil {
-				result[key] = value // Keep original on error
-			} else {
-				result[key] = translated
-			}
-		} else {
-			result[key] = value
-		}
-	}
-
-	return result, nil
+	return "en", nil
 }

@@ -30,14 +30,14 @@ func (m *Model) View() string {
 	case ViewHome:
 		keysTitle = m.translate("🎬 Quick Actions")
 		keys = styles.KeysStyle.Render(
-			m.translate("Create New Note") + "  •  " + m.translate("View All Notes") + "  •  " + m.translate("Help") + "  •  " + m.translate("Quit") + "\n" +
-				m.translate("Change UI Language") + "  •  " + m.translate("Themes") + "  •  " + m.translate("Statistics") + "  •  " + m.translate("Notebooks"),
+			"Ctrl+N: " + m.translate("Create New Note") + "  •  Ctrl+L: " + m.translate("View All Notes") + "  •  Ctrl+H: " + m.translate("Help") + "  •  Q: " + m.translate("Quit") + "\n" +
+				"Alt+T: " + m.translate("Change UI Language") + "  •  P: " + m.translate("Themes") + "  •  S: " + m.translate("Statistics") + "  •  B: " + m.translate("Notebooks"),
 		)
 	case ViewList:
 		keysTitle = m.translate("📋 Note List")
 		keys = styles.KeysStyle.Render(
-			m.translate("Navigate Notes") + "  •  " + m.translate("Open Selected") + "  •  " + m.translate("Delete Note") + "\n" +
-				m.translate("Search Notes") + "  •  " + m.translate("Back to Home"),
+			"↑↓: " + m.translate("Navigate Notes") + "  •  Enter: " + m.translate("Open Selected") + "  •  Ctrl+D: " + m.translate("Delete Note") + "\n" +
+				"/: " + m.translate("Search Notes") + "  •  Esc: " + m.translate("Back to Home"),
 		)
 	case ViewEditor:
 		editorInfo := ""
@@ -52,8 +52,8 @@ func (m *Model) View() string {
 		}
 		keysTitle = m.translate("✏️  Editor Mode")
 		keys = styles.KeysStyle.Render(
-			m.translate("Save and Close") + "  •  " + m.translate("Focus Mode") + "  •  " + m.translate("Pin/Unpin") + "\n" +
-				m.translate("Wiki Links") + "  •  " + m.translate("Minimize Editor"),
+			"Ctrl+S: " + m.translate("Save and Close") + "  •  Alt+F: " + m.translate("Focus Mode") + "  •  Alt+P: " + m.translate("Pin/Unpin") + "\n" +
+				"Alt+L: " + m.translate("Wiki Links") + "  •  Esc: " + m.translate("Minimize Editor"),
 		)
 		if editorInfo != "" {
 			keys = editorInfo + "\n" + keys
@@ -135,7 +135,7 @@ func (m *Model) View() string {
 
 			styles.TitleStyle.Render(m.translate("📝 CREATING NOTES")) + "\n" +
 			styles.MenuItemStyle.Render("  • Ctrl+N → "+m.translate("Create new note with custom name")) + "\n" +
-			styles.MenuItemStyle.Render("  • Ctrl+D → "+m.translate("Daily journal (auto-dated)")) + "\n" +
+			styles.MenuItemStyle.Render("  • Alt+D → "+m.translate("Daily journal (auto-dated)")) + "\n" +
 			styles.MenuItemStyle.Render("  • Ctrl+Q → "+m.translate("Quick scratch pad (temporary notes)")) + "\n" +
 			styles.MenuItemStyle.Render("  • Ctrl+T → "+m.translate("Use pre-made templates (meetings, todos, etc.)")) + "\n" +
 			styles.MenuItemStyle.Render("  • B → "+m.translate("Organize notes into notebooks")) + "\n" +
@@ -567,13 +567,18 @@ func (m *Model) renderLanguageSelector() string {
 	var sb strings.Builder
 
 	title := styles.TitleStyle.Render("🌐 SELECT UI LANGUAGE")
-	subtitle := styles.InfoStyle.Render("\nChange the interface language to:")
-	info := styles.SubtleStyle.Render("\n(Note: This translates menus and buttons, NOT your note content)")
-	sb.WriteString(title + subtitle + info + "\n\n")
+	subtitle := styles.InfoStyle.Render("Change the interface language to:")
+	info := styles.SubtleStyle.Render("(Note: This translates menus and buttons, NOT your note content)")
+
+	sb.WriteString(title + "\n")
+	sb.WriteString(subtitle + "\n")
+	sb.WriteString(info + "\n\n")
 
 	languages := getAvailableLanguages()
 
-	for i, lang := range languages {
+	// Display in 2 columns for better layout
+	for i := 0; i < len(languages); i++ {
+		lang := languages[i]
 		marker := "  "
 		style := styles.MenuItemStyle
 
@@ -582,17 +587,12 @@ func (m *Model) renderLanguageSelector() string {
 			style = styles.HighlightStyle
 		}
 
-		// Format: "→ ES  Spanish (Español)" with proper spacing
-		sb.WriteString(style.Render(fmt.Sprintf("%s%-30s\n", marker, lang.Name)))
+		// Single column, left-aligned
+		sb.WriteString(style.Render(fmt.Sprintf("%s%s\n", marker, lang.Name)))
 	}
 
 	sb.WriteString("\n")
 	sb.WriteString(styles.SubtleStyle.Render("💡 Use ↑↓ to navigate, Enter to change language, Esc to cancel"))
-
-	if m.translating {
-		sb.WriteString("\n")
-		sb.WriteString(styles.InfoStyle.Render("🌐 Translation in progress..."))
-	}
 
 	return sb.String()
 }
