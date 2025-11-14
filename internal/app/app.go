@@ -258,7 +258,7 @@ func (m *Model) translate(text string) string {
 	cached, ok := m.translationCache[cacheKey]
 	cacheSize := len(m.translationCache)
 	m.cacheMutex.RUnlock()
-	
+
 	if ok {
 		return cached
 	}
@@ -286,7 +286,9 @@ func (m *Model) translate(text string) string {
 	select {
 	case result := <-done:
 		// Cache the result for instant future use
+		m.cacheMutex.Lock()
 		m.translationCache[cacheKey] = result
+		m.cacheMutex.Unlock()
 		return result
 	case <-time.After(800 * time.Millisecond):
 		// Timeout - return original text temporarily
@@ -317,14 +319,20 @@ func (m *Model) prewarmCache(strings []string) {
 		for _, text := range strings {
 			cacheKey := m.currentUILanguage + ":" + text
 			// Skip if already cached
-			if _, ok := m.translationCache[cacheKey]; ok {
+			m.cacheMutex.RLock()
+			_, ok := m.translationCache[cacheKey]
+			m.cacheMutex.RUnlock()
+
+			if ok {
 				continue
 			}
 
 			// Translate and cache
 			translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, false)
 			if err == nil {
+				m.cacheMutex.Lock()
 				m.translationCache[cacheKey] = translated
+				m.cacheMutex.Unlock()
 			}
 		}
 	}()

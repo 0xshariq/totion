@@ -67,6 +67,10 @@ Clean, distraction-free writing environment with auto-save and markdown support.
 
 ![Totion Notes Editor](app-images/totion-notes-editor.png)
 
+### Translation
+
+![Totion Translation](app-images/totion-translation.png)
+
 ### Help Menu
 
 Comprehensive help system with organized topics and easy navigation.
@@ -185,17 +189,17 @@ make clean
 
 Change the entire interface language with real-time translation powered by Lingo.dev!
 
-| Key      | Action                                     |
-| -------- | ------------------------------------------ |
-| `Alt+T`  | Open language selector                     |
-| `↑` `↓`  | Navigate through available languages       |
-| `Enter`  | Change UI language to selected             |
-| `Esc`    | Cancel language selection                  |
+| Key     | Action                               |
+| ------- | ------------------------------------ |
+| `Alt+T` | Open language selector               |
+| `↑` `↓` | Navigate through available languages |
+| `Enter` | Change UI language to selected       |
+| `Esc`   | Cancel language selection            |
 
 **Supported Languages:**
 
 - 🇪🇸 Spanish (Español)
-- 🇫🇷 French (Français)  
+- 🇫🇷 French (Français)
 - 🇩🇪 German (Deutsch)
 - 🇯🇵 Japanese (日本語)
 - 🇨🇳 Chinese (中文)
@@ -205,6 +209,7 @@ Change the entire interface language with real-time translation powered by Lingo
 - 🇷🇺 Russian (Русский)
 
 **Features:**
+
 - Translates ALL UI text: menus, buttons, help sections, and keyboard shortcuts
 - Does NOT translate your note content - only the interface
 - Real-time translation using Lingo.dev API
@@ -233,6 +238,7 @@ Change the entire interface language with real-time translation powered by Lingo
 **Performance & UI Responsiveness:**
 
 ⚡ **Smooth Translation Experience:**
+
 - **First Load**: New strings translate on-demand (~800ms max each)
 - **Cached Strings**: Instant (<1ms) for all previously translated text
 - **Pre-warmed Cache**: Common UI strings translated in background automatically
@@ -240,6 +246,7 @@ Change the entire interface language with real-time translation powered by Lingo
 - **Progressive Loading**: Shows English temporarily, then updates with translation
 
 💡 **Avoiding UI Freezing:**
+
 1. **Cache Pre-warming**: When you select a language, 20+ common strings are pre-translated in the background
 2. **Incremental Translation**: UI strings translate one at a time as needed (not all at once)
 3. **Smart Timeout**: If translation takes >800ms, shows English text temporarily
@@ -247,6 +254,7 @@ Change the entire interface language with real-time translation powered by Lingo
 5. **Memory Caching**: Stores up to 2000 translations for instant reuse
 
 ⚠️ **First-Time Translation Notes:**
+
 - Initial language change may show mixed English/translated text briefly
 - This is normal - strings are being translated in the background
 - Navigate through menus to trigger translation of that view's text
@@ -256,11 +264,13 @@ Change the entire interface language with real-time translation powered by Lingo
 **Technical Details:**
 
 The translation system uses a bridge server architecture:
+
 ```
 Go App → Bridge Server (localhost:3737) → Lingo.dev JavaScript SDK → Translated UI
 ```
 
 **Bridge Server Features:**
+
 - **Auto-Start**: Automatically starts when you launch Totion
 - **Auto-Stop**: Gracefully stops when you quit the app (Ctrl+C or Q)
 - **Health Checks**: Verifies server is running before starting a new instance
@@ -270,6 +280,7 @@ Go App → Bridge Server (localhost:3737) → Lingo.dev JavaScript SDK → Trans
 - **No Manual Management**: Zero user intervention required
 
 **Bridge Server Reliability:**
+
 - Waits up to 10 seconds for server to be ready
 - Retries connection every 300ms
 - Shows startup status in terminal
@@ -280,14 +291,14 @@ Go App → Bridge Server (localhost:3737) → Lingo.dev JavaScript SDK → Trans
 
 **Troubleshooting Translation:**
 
-| Issue | Solution |
-|-------|----------|
-| UI shows mixed English/translated text | Normal on first load - navigate through views to trigger translation |
-| Translation seems slow | First time only - subsequent loads are instant (cached) |
-| App briefly freezes when selecting language | Pre-warming cache in background - app remains usable |
-| Bridge server won't start | Check Node.js/npm installed, or set LINGODOTDEV_API_KEY in .env |
-| Some text not translating | Technical errors/file paths are intentionally not translated |
-| Want faster translation | Translation is cached - revisit screens to see instant results |
+| Issue                                       | Solution                                                             |
+| ------------------------------------------- | -------------------------------------------------------------------- |
+| UI shows mixed English/translated text      | Normal on first load - navigate through views to trigger translation |
+| Translation seems slow                      | First time only - subsequent loads are instant (cached)              |
+| App briefly freezes when selecting language | Pre-warming cache in background - app remains usable                 |
+| Bridge server won't start                   | Check Node.js/npm installed, or set LINGODOTDEV_API_KEY in .env      |
+| Some text not translating                   | Technical errors/file paths are intentionally not translated         |
+| Want faster translation                     | Translation is cached - revisit screens to see instant results       |
 
 **Note:** If API key is not set, the app will work fine in English.
 
