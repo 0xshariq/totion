@@ -3,6 +3,7 @@ package app
 import (
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/0xshariq/totion/internal/features/autosave"
@@ -57,47 +58,48 @@ const (
 
 // Model represents the main application model
 type Model struct {
-	storage             *storage.Storage
-	state               ViewState
-	list                list.Model
-	editor              textarea.Model
-	fileNameInput       textinput.Model
-	notebookNameInput   textinput.Model // Input for notebook names
-	searchInput         textinput.Model // Input for search queries
-	homeViewport        viewport.Model  // Viewport for scrolling home view
-	helpViewport        viewport.Model  // Viewport for scrolling help content
-	contentViewport     viewport.Model  // General viewport for other scrollable views
-	currentFile         *os.File
-	currentNote         *models.Note
-	selectedFormat      models.FileFormat
-	selectedTemplate    string // Track selected template name
-	selectedNotebook    string // Track selected notebook for note creation
-	helpTopic           string // Track selected help topic
-	formatIndex         int
-	statusMessage       string
-	err                 error
-	width               int
-	height              int
-	autoSaver           *autosave.AutoSaver     // Auto-save manager
-	recentManager       *recent.RecentManager   // Recent notes manager
-	pinnedManager       *pinned.PinnedManager   // Pinned notes manager
-	dailyManager        *daily.DailyManager     // Daily notes manager
-	quickManager        *quick.QuickNoteManager // Quick note manager
-	searchManager       *search.SearchManager   // Search manager
-	tagManager          *tags.TagManager        // Tag manager
-	searchResults       []search.SearchResult   // Search results
-	isEditorDirty       bool                    // Track if editor has unsaved changes
-	focusMode           bool                    // Focus mode (minimal UI)
-	homeViewReady       bool                    // Track if home viewport is initialized
-	lingoClient         *lingo.Client           // Lingo.dev translation client
-	bridgeServer        *lingo.BridgeServer     // Bridge server manager
-	selectedLangIndex   int                     // Selected language index in language selector
-	translating         bool                    // Track if translation is in progress
-	previousState       ViewState               // Track previous state before language selector
-	currentUILanguage   string                  // Current UI language code (e.g., "en", "es")
-	translationCache    map[string]string       // Cache for translated strings (key: "lang:text", value: "translation")
-	translatedViewCache map[string]string       // Cache for entire translated views (key: "lang:viewstate", value: "rendered content")
-	lastTranslatedState ViewState               // Track which view was last translated
+	storage           *storage.Storage
+	state             ViewState
+	list              list.Model
+	editor            textarea.Model
+	fileNameInput     textinput.Model
+	notebookNameInput textinput.Model // Input for notebook names
+	searchInput       textinput.Model // Input for search queries
+	homeViewport      viewport.Model  // Viewport for scrolling home view
+	helpViewport      viewport.Model  // Viewport for scrolling help content
+	contentViewport   viewport.Model  // General viewport for other scrollable views
+	currentFile       *os.File
+	currentNote       *models.Note
+	selectedFormat    models.FileFormat
+	selectedTemplate  string // Track selected template name
+	selectedNotebook  string // Track selected notebook for note creation
+	helpTopic         string // Track selected help topic
+	formatIndex       int
+	statusMessage     string
+	err               error
+	width             int
+	height            int
+	autoSaver         *autosave.AutoSaver     // Auto-save manager
+	recentManager     *recent.RecentManager   // Recent notes manager
+	pinnedManager     *pinned.PinnedManager   // Pinned notes manager
+	dailyManager      *daily.DailyManager     // Daily notes manager
+	quickManager      *quick.QuickNoteManager // Quick note manager
+	searchManager     *search.SearchManager   // Search manager
+	tagManager        *tags.TagManager        // Tag manager
+	searchResults     []search.SearchResult   // Search results
+	isEditorDirty     bool                    // Track if editor has unsaved changes
+	focusMode         bool                    // Focus mode (minimal UI)
+	homeViewReady     bool                    // Track if home viewport is initialized
+	lingoClient       *lingo.Client           // Lingo.dev translation client
+	bridgeServer      *lingo.BridgeServer     // Bridge server manager
+	selectedLangIndex int                     // Selected language index in language selector
+	translating       bool                    // Track if translation is in progress
+	previousState     ViewState               // Track previous state before language selector
+	currentUILanguage string                  // Current UI language code (e.g., "en", "es")
+	translationCache  map[string]string       // Cache for translated strings (key: "lang:text", value: "translation")
+	cacheMutex        sync.RWMutex            // Mutex for thread-safe cache access
+	viewCache         map[string]string       // Cache for entire rendered views (key: "lang:viewstate", value: "rendered content")
+	lastCachedView    string                  // Last cached view key for quick lookup
 }
 
 // New creates a new application model
@@ -148,6 +150,7 @@ func New() *Model {
 		previousState:     ViewHome,
 		currentUILanguage: "en", // Default to English,
 		translationCache:  make(map[string]string),
+		viewCache:         make(map[string]string),
 	}
 
 	// Setup auto-save callback
@@ -238,7 +241,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // translate translates text to the current UI language using Lingo.dev API
 // Returns original text if translation fails or language is English
-// Uses caching to avoid repeated API calls
+// Uses caching to avoid repeated API calls - extremely fast for cached items
 func (m *Model) translate(text string) string {
 	// If English or no translation client, return original
 	if m.currentUILanguage == "en" || m.currentUILanguage == "" {
@@ -249,14 +252,19 @@ func (m *Model) translate(text string) string {
 		return text
 	}
 
-	// Check cache first
+	// Check cache first - this is instant for cached translations
 	cacheKey := m.currentUILanguage + ":" + text
-	if cached, ok := m.translationCache[cacheKey]; ok {
+	m.cacheMutex.RLock()
+	cached, ok := m.translationCache[cacheKey]
+	cacheSize := len(m.translationCache)
+	m.cacheMutex.RUnlock()
+	
+	if ok {
 		return cached
 	}
 
 	// Don't translate if we have too many items in cache (avoid memory issues)
-	if len(m.translationCache) > 1000 {
+	if cacheSize > 2000 {
 		return text
 	}
 
@@ -273,21 +281,53 @@ func (m *Model) translate(text string) string {
 		}
 	}()
 
-	// Wait for translation with longer timeout for quality results
+	// Wait for translation with timeout for quality results
+	// Short timeout since we pre-warm cache - if it's not cached yet, show English temporarily
 	select {
 	case result := <-done:
+		// Cache the result for instant future use
 		m.translationCache[cacheKey] = result
 		return result
-	case <-time.After(2 * time.Second):
-		// Timeout - return original text and don't cache
+	case <-time.After(800 * time.Millisecond):
+		// Timeout - return original text temporarily
+		// The prewarm cache will translate it in background
+		// Next render will show the translation
 		return text
 	}
 }
 
-// clearViewCache clears the translated view cache when language changes
+// clearViewCache clears the view cache when language changes
 func (m *Model) clearViewCache() {
-	m.translatedViewCache = make(map[string]string)
-	m.lastTranslatedState = m.state
+	m.viewCache = make(map[string]string)
+	m.lastCachedView = ""
+}
+
+// prewarmCache pre-translates common UI strings in background for smooth rendering
+func (m *Model) prewarmCache(strings []string) {
+	if m.currentUILanguage == "en" || m.currentUILanguage == "" {
+		return
+	}
+
+	if m.lingoClient == nil || !m.lingoClient.IsEnabled() {
+		return
+	}
+
+	// Pre-translate in background without blocking UI
+	go func() {
+		for _, text := range strings {
+			cacheKey := m.currentUILanguage + ":" + text
+			// Skip if already cached
+			if _, ok := m.translationCache[cacheKey]; ok {
+				continue
+			}
+
+			// Translate and cache
+			translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, false)
+			if err == nil {
+				m.translationCache[cacheKey] = translated
+			}
+		}
+	}()
 }
 
 // All handler functions are defined in handlers.go

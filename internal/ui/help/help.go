@@ -15,19 +15,20 @@ var (
 )
 
 // GetHelpMenu returns the main help menu
-func GetHelpMenu() string {
-	return headerStyle.Render("📚 HELP MENU") + "\n\n" +
-		textStyle.Render("Select a topic to learn more:") + "\n\n" +
-		menuStyle.Render("  1. ⌨️  Keyboard Shortcuts - Complete key reference") + "\n" +
-		menuStyle.Render("  2. 🚀 Getting Started - Quick start guide") + "\n" +
-		menuStyle.Render("  3. 📝 Templates Guide - Pre-made note templates") + "\n" +
-		menuStyle.Render("  4. 🎨 Themes Guide - Customize appearance") + "\n" +
-		menuStyle.Render("  5. 📤 Export & Import - Move notes in/out") + "\n" +
-		menuStyle.Render("  6. 🔄 Git Version Control - Track changes") + "\n" +
-		menuStyle.Render("  7. 📊 Statistics & Analytics - View insights") + "\n" +
-		menuStyle.Render("  8. ☁️  Sync & Backup - Cloud sync setup") + "\n" +
-		menuStyle.Render("  9. 📂 Notebooks & Organization - Folder system") + "\n" +
-		menuStyle.Render("  0. 💻 Developer Integration - API docs") + "\n" +
-		menuStyle.Render("  T. 🌐 UI Translation - Multi-language support") + "\n\n" +
-		dimStyle.Render("Press 1-9, 0, or T to view a topic • Press Esc to go back to home")
+// TranslateFunc is a function that translates text
+func GetHelpMenu(translate func(string) string) string {
+	return headerStyle.Render(translate("📚 HELP MENU")) + "\n\n" +
+		textStyle.Render(translate("Select a topic to learn more:")) + "\n\n" +
+		menuStyle.Render("  1. ⌨️  "+translate("Keyboard Shortcuts - Complete key reference")) + "\n" +
+		menuStyle.Render("  2. 🚀 "+translate("Getting Started - Quick start guide")) + "\n" +
+		menuStyle.Render("  3. 📝 "+translate("Templates Guide - Pre-made note templates")) + "\n" +
+		menuStyle.Render("  4. 🎨 "+translate("Themes Guide - Customize appearance")) + "\n" +
+		menuStyle.Render("  5. 📤 "+translate("Export & Import - Move notes in/out")) + "\n" +
+		menuStyle.Render("  6. 🔄 "+translate("Git Version Control - Track changes")) + "\n" +
+		menuStyle.Render("  7. 📊 "+translate("Statistics & Analytics - View insights")) + "\n" +
+		menuStyle.Render("  8. ☁️  "+translate("Sync & Backup - Cloud sync setup")) + "\n" +
+		menuStyle.Render("  9. 📂 "+translate("Notebooks & Organization - Folder system")) + "\n" +
+		menuStyle.Render("  0. 💻 "+translate("Developer Integration - API docs")) + "\n" +
+		menuStyle.Render("  T. 🌐 "+translate("UI Translation - Multi-language support")) + "\n\n" +
+		dimStyle.Render(translate("Press 1-9, 0, or T to view a topic")+" • "+translate("Press Esc to go back to home"))
 }

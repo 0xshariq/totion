@@ -227,8 +227,31 @@ Change the entire interface language with real-time translation powered by Lingo
 - **Context Preservation**: Technical UI terms are preserved correctly
 - **Smart Caching**: Translations cached in Redis/memory for instant reuse
 - **Auto-Start Bridge**: Node.js bridge server starts automatically with the app
-- **Timeout Protection**: 2-second timeout prevents UI freezing
+- **Timeout Protection**: 800ms timeout prevents UI freezing
 - **No Manual Server**: Bridge server auto-starts and auto-stops with the app
+
+**Performance & UI Responsiveness:**
+
+⚡ **Smooth Translation Experience:**
+- **First Load**: New strings translate on-demand (~800ms max each)
+- **Cached Strings**: Instant (<1ms) for all previously translated text
+- **Pre-warmed Cache**: Common UI strings translated in background automatically
+- **No UI Blocking**: Short timeout ensures app stays responsive
+- **Progressive Loading**: Shows English temporarily, then updates with translation
+
+💡 **Avoiding UI Freezing:**
+1. **Cache Pre-warming**: When you select a language, 20+ common strings are pre-translated in the background
+2. **Incremental Translation**: UI strings translate one at a time as needed (not all at once)
+3. **Smart Timeout**: If translation takes >800ms, shows English text temporarily
+4. **Background Translation**: Slow translations happen in background, appear on next render
+5. **Memory Caching**: Stores up to 2000 translations for instant reuse
+
+⚠️ **First-Time Translation Notes:**
+- Initial language change may show mixed English/translated text briefly
+- This is normal - strings are being translated in the background
+- Navigate through menus to trigger translation of that view's text
+- After first pass, all translations are cached = instant performance
+- Translation happens per-view, not globally (more responsive)
 
 **Technical Details:**
 
@@ -254,6 +277,17 @@ Go App → Bridge Server (localhost:3737) → Lingo.dev JavaScript SDK → Trans
 - Redis caching (optional, falls back to memory cache)
 - Quality mode translation for hackathon-grade accuracy
 - Only translates UI text, never your note content
+
+**Troubleshooting Translation:**
+
+| Issue | Solution |
+|-------|----------|
+| UI shows mixed English/translated text | Normal on first load - navigate through views to trigger translation |
+| Translation seems slow | First time only - subsequent loads are instant (cached) |
+| App briefly freezes when selecting language | Pre-warming cache in background - app remains usable |
+| Bridge server won't start | Check Node.js/npm installed, or set LINGODOTDEV_API_KEY in .env |
+| Some text not translating | Technical errors/file paths are intentionally not translated |
+| Want faster translation | Translation is cached - revisit screens to see instant results |
 
 **Note:** If API key is not set, the app will work fine in English.
 

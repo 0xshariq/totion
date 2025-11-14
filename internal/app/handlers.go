@@ -102,14 +102,14 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 	case "alt+l":
 		if m.state == ViewEditor {
 			// Show linking menu in editor
-			m.statusMessage = styles.InfoStyle.Render("Use [[Note Title]] to create links")
+			m.statusMessage = styles.InfoStyle.Render(m.translate("Use [[Note Title]] to create links"))
 			return true, m, nil
 		}
 
 	case "alt+t":
 		// Change UI language from anywhere in the app
 		if !m.lingoClient.IsEnabled() {
-			m.statusMessage = styles.WarningStyle.Render("⚠️  Translation disabled. Set LINGODOTDEV_API_KEY in .env file. Get free key: https://lingo.dev")
+			m.statusMessage = styles.WarningStyle.Render(m.translate("⚠️  Translation disabled. Set LINGODOTDEV_API_KEY in .env file. Get free key: https://lingo.dev"))
 			return true, m, nil
 		}
 		// Save current state to return to it after language selection
@@ -172,7 +172,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 			}
 			m.isEditorDirty = false
 
-			m.statusMessage = styles.SuccessStyle.Render("📅 Daily journal opened")
+			m.statusMessage = styles.SuccessStyle.Render(m.translate("📅 Daily journal opened"))
 			return true, m, nil
 		}
 
@@ -181,9 +181,9 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 			// Toggle focus mode
 			m.focusMode = !m.focusMode
 			if m.focusMode {
-				m.statusMessage = styles.InfoStyle.Render("Focus Mode ON - Press Ctrl+F to exit")
+				m.statusMessage = styles.InfoStyle.Render(m.translate("Focus Mode ON - Press Ctrl+F to exit"))
 			} else {
-				m.statusMessage = styles.InfoStyle.Render("Focus Mode OFF")
+				m.statusMessage = styles.InfoStyle.Render(m.translate("Focus Mode OFF"))
 			}
 			return true, m, nil
 		}
@@ -196,9 +196,9 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 				m.statusMessage = styles.ErrorStyle.Render("Error toggling pin: " + err.Error())
 			} else {
 				if isPinned {
-					m.statusMessage = styles.SuccessStyle.Render("📌 Note pinned!")
+					m.statusMessage = styles.SuccessStyle.Render(m.translate("📌 Note pinned!"))
 				} else {
-					m.statusMessage = styles.InfoStyle.Render("📌 Note unpinned")
+					m.statusMessage = styles.InfoStyle.Render(m.translate("📌 Note unpinned"))
 				}
 			}
 			return true, m, nil
@@ -362,7 +362,7 @@ func (m *Model) handleEscape() (tea.Model, tea.Cmd) {
 		// Just go back to home without saving
 		// Don't close file or stop auto-save - let auto-save continue in background
 		m.state = ViewHome
-		m.statusMessage = styles.InfoStyle.Render("Editor minimized - auto-save still active. Press Ctrl+L to view notes")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Editor minimized - auto-save still active. Press Ctrl+L to view notes"))
 
 	case ViewList:
 		m.state = ViewHome
@@ -546,7 +546,7 @@ func (m *Model) saveCurrentNote() (tea.Model, tea.Cmd) {
 	m.currentNote = nil
 	m.editor.SetValue("")
 	m.state = ViewHome
-	m.statusMessage = styles.SuccessStyle.Render("✓ Note saved successfully!")
+	m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Note saved successfully!"))
 
 	return m, nil
 }
@@ -654,7 +654,7 @@ func (m *Model) selectTheme(key string) {
 func (m *Model) handleExport(key string) {
 	if m.currentNote == nil {
 		m.state = ViewHome
-		m.statusMessage = styles.ErrorStyle.Render("⚠️  No note open. Open a note first to export.")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("⚠️  No note open. Open a note first to export."))
 		return
 	}
 
@@ -752,14 +752,14 @@ func (m *Model) handleGitAction(key string) {
 		if err != nil {
 			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Git init failed: %v", err))
 		} else {
-			m.statusMessage = styles.SuccessStyle.Render("✓ Git repository initialized")
+			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Git repository initialized"))
 		}
 	case "2": // Commit
 		err := gitManager.Commit("Auto-commit from Totion")
 		if err != nil {
 			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Commit failed: %v", err))
 		} else {
-			m.statusMessage = styles.SuccessStyle.Render("✓ Changes committed")
+			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Changes committed"))
 		}
 	case "3": // History
 		history, _ := gitManager.GetHistory(5)
@@ -796,7 +796,7 @@ func (m *Model) handleSyncAction(key string) {
 		if err != nil {
 			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Restore failed: %v", err))
 		} else {
-			m.statusMessage = styles.SuccessStyle.Render("✓ Vault restored from backup")
+			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Vault restored from backup"))
 		}
 	case "3": // Sync to cloud
 		m.statusMessage = styles.InfoStyle.Render("Cloud sync requires configuration. See README for setup.")
@@ -993,7 +993,7 @@ func (m *Model) createNotebook() (tea.Model, tea.Cmd) {
 	notebookName := m.notebookNameInput.Value()
 
 	if notebookName == "" {
-		m.statusMessage = styles.ErrorStyle.Render("Notebook name cannot be empty")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Notebook name cannot be empty"))
 		return m, nil
 	}
 
@@ -1021,7 +1021,7 @@ func (m *Model) selectNotebookForNote(key string) {
 
 	notebooks, err := nbManager.ListNotebooks()
 	if err != nil || len(notebooks) == 0 {
-		m.statusMessage = styles.ErrorStyle.Render("No notebooks available")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("No notebooks available"))
 		m.state = ViewHome
 		return
 	}
@@ -1063,12 +1063,12 @@ func (m *Model) createNoteInNotebook() (tea.Model, tea.Cmd) {
 	filename := m.fileNameInput.Value()
 
 	if filename == "" {
-		m.statusMessage = styles.ErrorStyle.Render("Note name cannot be empty")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Note name cannot be empty"))
 		return m, nil
 	}
 
 	if m.selectedNotebook == "" {
-		m.statusMessage = styles.ErrorStyle.Render("No notebook selected")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("No notebook selected"))
 		m.state = ViewHome
 		return m, nil
 	}
@@ -1082,7 +1082,7 @@ func (m *Model) createNoteInNotebook() (tea.Model, tea.Cmd) {
 
 	// Check if file already exists
 	if _, err := os.Stat(notePath); err == nil {
-		m.statusMessage = styles.ErrorStyle.Render("Note already exists in this notebook")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Note already exists in this notebook"))
 		return m, nil
 	}
 
@@ -1147,7 +1147,7 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 	languages := getAvailableLanguages()
 	if m.selectedLangIndex >= len(languages) {
 		m.state = m.previousState
-		m.statusMessage = styles.ErrorStyle.Render("Invalid language selection")
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Invalid language selection"))
 		return true, m, nil
 	}
 
@@ -1158,6 +1158,34 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 
 	// Clear translation cache when language changes
 	m.translationCache = make(map[string]string)
+	m.clearViewCache()
+
+	// Pre-warm cache with common strings for smooth rendering (40+ strings)
+	commonStrings := []string{
+		// Main actions
+		"Create New Note", "View All Notes", "Help", "Quit",
+		"Change UI Language", "Themes", "Statistics", "Notebooks",
+		// Navigation
+		"Navigate Notes", "Open Selected", "Delete Note", "Search Notes",
+		"Back to Home", "Save and Close", "Focus Mode", "Pin/Unpin",
+		"Wiki Links", "Minimize Editor", "Quick Actions", "Note List",
+		"Editor Mode",
+		// Status messages
+		"Note saved successfully!", "Note pinned!", "Note unpinned",
+		"Daily journal opened", "Focus Mode ON - Press Ctrl+F to exit",
+		"Focus Mode OFF",
+		// Common UI elements
+		"Enter note name:", "Create New Notebook", "Editing",
+		"Press Esc to go back", "Use [[Note Title]] to create links",
+		// View titles
+		"🎬 Quick Actions", "📋 Note List", "✏️  Editor Mode",
+		"📝 Create New Note", "❓ Help & Documentation",
+		// Keyboard shortcuts
+		"Ctrl+N", "Ctrl+L", "Ctrl+H", "Ctrl+S", "Alt+T", "Alt+F",
+		// Common words
+		"Cancel", "Confirm", "Yes", "No", "Error", "Success",
+	}
+	m.prewarmCache(commonStrings)
 
 	// Return to previous state
 	m.state = m.previousState
@@ -1170,7 +1198,7 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 			fmt.Sprintf("⚠ UI set to %s but translation unavailable - set LINGODOTDEV_API_KEY in .env file", targetLang.Name))
 	} else {
 		m.statusMessage = styles.SuccessStyle.Render(
-			fmt.Sprintf("✓ UI language set to %s - All interface text will now be translated", targetLang.Name))
+			fmt.Sprintf("✓ UI language set to %s - Translating interface...", targetLang.Name))
 	}
 
 	return true, m, nil

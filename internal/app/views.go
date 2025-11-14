@@ -223,27 +223,27 @@ func (m *Model) View() string {
 		// Show help menu or specific topic based on selection
 		var helpContent string
 		if m.helpTopic == "" {
-			helpContent = help.GetHelpMenu()
+			helpContent = help.GetHelpMenu(m.translate)
 		} else {
 			switch m.helpTopic {
 			case "1":
-				helpContent = help.GetKeyboardShortcuts()
+				helpContent = help.GetKeyboardShortcuts(m.translate)
 			case "2":
-				helpContent = help.GetGettingStarted()
+				helpContent = help.GetGettingStarted(m.translate)
 			case "3":
-				helpContent = help.GetTemplatesGuide()
+				helpContent = help.GetTemplatesGuide(m.translate)
 			case "4":
-				helpContent = help.GetThemesGuide()
+				helpContent = help.GetThemesGuide(m.translate)
 			case "5":
-				helpContent = help.GetExportImportGuide()
+				helpContent = help.GetExportImportGuide(m.translate)
 			case "6":
-				helpContent = help.GetGitGuide()
+				helpContent = help.GetGitGuide(m.translate)
 			case "7":
-				helpContent = help.GetStatsGuide()
+				helpContent = help.GetStatsGuide(m.translate)
 			case "8":
-				helpContent = help.GetSyncGuide()
+				helpContent = help.GetSyncGuide(m.translate)
 			case "9":
-				helpContent = help.GetNotebooksGuide()
+				helpContent = help.GetNotebooksGuide(m.translate)
 			case "0":
 				helpContent = help.GetDeveloperGuide()
 			// Developer submenu (0-1 through 0-9)
@@ -266,15 +266,15 @@ func (m *Model) View() string {
 			case "0-9":
 				helpContent = help.GetDeveloperBestPractices()
 			case "t", "T":
-				helpContent = help.GetTranslationGuide()
+				helpContent = help.GetTranslationGuide(m.translate)
 			default:
-				helpContent = help.GetHelpMenu()
+				helpContent = help.GetHelpMenu(m.translate)
 			}
 		}
 		// Set the help content in viewport and render it
 		m.helpViewport.SetContent(helpContent)
 		view = m.helpViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll to navigate • Page Up/Down for faster scrolling")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll to navigate • Page Up/Down for faster scrolling"))
 	case ViewTemplates:
 		templates := []string{
 			"1. 📋 Meeting Notes      → Structured meeting minutes",

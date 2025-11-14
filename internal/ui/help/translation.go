@@ -1,8 +1,8 @@
 package help
 
 // GetTranslationGuide returns translation feature guide
-func GetTranslationGuide() string {
-	return headerStyle.Render("🌐 UI TRANSLATION GUIDE") + "\n\n" +
+func GetTranslationGuide(translate func(string) string) string {
+	return headerStyle.Render(translate("🌐 UI TRANSLATION GUIDE")) + "\n\n" +
 		successStyle.Render("WHAT GETS TRANSLATED:") + "\n" +
 		textStyle.Render("  ✓ All UI elements (menus, buttons, labels)") + "\n" +
 		textStyle.Render("  ✓ Help sections and documentation") + "\n" +
