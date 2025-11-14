@@ -1,0 +1,25 @@
+# Binary
+totion
+
+# Build artifacts
+*.exe
+*.test
+*.out
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Totion data
+.totion/
+
+
+.env
+node_modules/
+
+*.md
+!README.md
