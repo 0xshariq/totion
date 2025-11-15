@@ -562,7 +562,7 @@ func countWords(text string) int {
 	return words
 }
 
-// renderLanguageSelector renders the language selection view
+// renderLanguageSelector renders the language selection view with viewport
 func (m *Model) renderLanguageSelector() string {
 	var sb strings.Builder
 
@@ -570,16 +570,10 @@ func (m *Model) renderLanguageSelector() string {
 	subtitle := styles.InfoStyle.Render(m.translate("Change the interface language to:"))
 	info := styles.SubtleStyle.Render(m.translate("(Note: This translates menus and buttons, NOT your note content)"))
 
-	sb.WriteString(title)
-	sb.WriteString("\n")
-	sb.WriteString(subtitle)
-	sb.WriteString("\n")
-	sb.WriteString(info)
-	sb.WriteString("\n\n")
-
+	// Build language list content
+	var langContent strings.Builder
 	languages := getAvailableLanguages()
 
-	// Display languages as a vertical list
 	for i := 0; i < len(languages); i++ {
 		lang := languages[i]
 		marker := "  "
@@ -598,8 +592,8 @@ func (m *Model) renderLanguageSelector() string {
 
 		// Render each language on its own line
 		line := fmt.Sprintf("%s%s%s", marker, lang.Name, currentIndicator)
-		sb.WriteString(style.Render(line))
-		sb.WriteString("\n")
+		langContent.WriteString(style.Render(line))
+		langContent.WriteString("\n")
 	}
 
 	// Show translation cache statistics if not English
@@ -609,14 +603,36 @@ func (m *Model) renderLanguageSelector() string {
 		m.cacheMutex.RUnlock()
 
 		if cacheSize > 0 {
-			sb.WriteString("\n")
 			cacheInfo := fmt.Sprintf(m.translate("📊 Translation cache: %d strings translated"), cacheSize)
-			sb.WriteString(styles.SubtleStyle.Render(cacheInfo))
-			sb.WriteString("\n")
+			langContent.WriteString("\n")
+			langContent.WriteString(styles.SubtleStyle.Render(cacheInfo))
 		}
 	}
 
+	// Set viewport content
+	m.langViewport.SetContent(langContent.String())
+
+	// Ensure selected language is visible
+	lineHeight := 1
+	selectedLine := m.selectedLangIndex * lineHeight
+	viewportTop := m.langViewport.YOffset
+	viewportBottom := viewportTop + m.langViewport.Height - 1
+
+	if selectedLine < viewportTop {
+		m.langViewport.YOffset = selectedLine
+	} else if selectedLine > viewportBottom {
+		m.langViewport.YOffset = selectedLine - m.langViewport.Height + 1
+	}
+
+	// Build final view
+	sb.WriteString(title)
 	sb.WriteString("\n")
+	sb.WriteString(subtitle)
+	sb.WriteString("\n")
+	sb.WriteString(info)
+	sb.WriteString("\n\n")
+	sb.WriteString(m.langViewport.View())
+	sb.WriteString("\n\n")
 	sb.WriteString(styles.SubtleStyle.Render(m.translate("💡 Use ↑↓ to navigate, Enter to change language, Esc to cancel")))
 
 	return sb.String()

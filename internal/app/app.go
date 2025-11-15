@@ -68,6 +68,7 @@ type Model struct {
 	homeViewport      viewport.Model  // Viewport for scrolling home view
 	helpViewport      viewport.Model  // Viewport for scrolling help content
 	contentViewport   viewport.Model  // General viewport for other scrollable views
+	langViewport      viewport.Model  // Viewport for language selector
 	currentFile       *os.File
 	currentNote       *models.Note
 	selectedFormat    models.FileFormat
@@ -191,6 +192,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.homeViewport.Width = msg.Width
 			m.homeViewport.Height = msg.Height - 5
 		}
+
+		// Initialize language viewport
+		m.langViewport = viewport.New(msg.Width, msg.Height-8) // -8 for header and hints
+		m.langViewport.YPosition = 0
 
 		// Initialize/update help viewport
 		m.helpViewport = viewport.New(msg.Width, msg.Height-10) // -10 for header and keys

@@ -66,18 +66,24 @@ const protectText = (text) => {
   const placeholders = [];
   let protected = text;
   
-  // Protect keyboard shortcuts ONLY when they appear as standalone or with arrows
-  // Match patterns like "Ctrl+N", "Alt+T →", but not inside sentences
-  protected = protected.replace(/(^|\s|•\s*)(Ctrl|Alt|Shift|Esc|Enter|Tab)(\+[A-Z0-9])?(\s*→)?/gi, (match, prefix, key, plus, arrow) => {
-    const placeholder = prefix + `__PRESERVE_${placeholders.length}__`;
-    placeholders.push(key + (plus || '') + (arrow || ''));
+  // Protect complete keyboard shortcuts (Ctrl+N, Alt+T, Shift+F, etc.)
+  protected = protected.replace(/\b(Ctrl|Alt|Shift|Esc|Enter|Tab|Space)\+[A-Z0-9]\b/gi, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
     return placeholder;
   });
   
-  // Protect single letter shortcuts at start (like "Q →", "P →", "B →", "S →", "G →", "T →")
-  protected = protected.replace(/(^|\s|•\s*)([A-Z])\s*(→)/g, (match, prefix, letter, arrow) => {
-    const placeholder = prefix + `__PRESERVE_${placeholders.length}__`;
-    placeholders.push(letter + ' ' + arrow);
+  // Protect single letter shortcuts with arrows (Q →, P →, B →, S →, G →, T →)
+  protected = protected.replace(/\b([QBPSGTFHILJKN])\s*→/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect arrow symbol
+  protected = protected.replace(/→/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
     return placeholder;
   });
   
@@ -88,15 +94,43 @@ const protectText = (text) => {
     return placeholder;
   });
   
-  // Protect emojis and special symbols
-  protected = protected.replace(/[←↑↓✓✗•📝📋📊💡🎯✨⚡🔒📁🌐🎬✏️💾📤📥🔄☁️📂❓🎨📜🔗⚠️📌📆✅🚀📖🔍⏰🗓️📈📉🗂️🔐🎓🌟]/g, (match) => {
+  // Protect ALL emojis (comprehensive Unicode ranges including flags)
+  protected = protected.replace(/[\u{1F300}-\u{1F9FF}]|[\u{1F600}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F1E6}-\u{1F1FF}]{2}/gu, (match) => {
     const placeholder = `__PRESERVE_${placeholders.length}__`;
     placeholders.push(match);
     return placeholder;
   });
   
-  // Protect file extensions
-  protected = protected.replace(/\.\w{2,4}(?=\s|$|\)|,)/g, (match) => {
+  // Protect special formatting symbols
+  protected = protected.replace(/[←↑↓✓✗•]/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect file extensions (.md, .txt, .json, etc.)
+  protected = protected.replace(/\.\w{2,4}\b/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect code/command patterns
+  protected = protected.replace(/(\$|\.\/|git |npm |make |cd )[^\s]+/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect URLs
+  protected = protected.replace(/https?:\/\/[^\s]+/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect file paths (~/.totion/, /tmp/, etc.)
+  protected = protected.replace(/~?\/[\w\/.-]+/g, (match) => {
     const placeholder = `__PRESERVE_${placeholders.length}__`;
     placeholders.push(match);
     return placeholder;
@@ -174,7 +208,7 @@ const initRedis = async () => {
     
     // Connection successful
     redis = client;
-    console.log('✓ Redis connected');
+    // Silently connected - no console output
   } catch (error) {
     // Silently fall back to memory cache
     redis = null;

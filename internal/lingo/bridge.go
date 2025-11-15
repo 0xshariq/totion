@@ -110,16 +110,8 @@ func (b *BridgeServer) Start() error {
 		time.Sleep(retryDelay)
 		if b.IsRunning() {
 			b.running = true
-			fmt.Printf("✓ Lingo.dev bridge server started successfully on port %d\n", b.port)
-			fmt.Println("  • Quality mode enabled for maximum accuracy")
-			fmt.Println("  • Context-aware translation active")
-			fmt.Println("  • Technical glossary loaded")
+			// Silently started - no console output
 			return nil // Server is ready
-		}
-
-		// Show progress every 2 seconds
-		if i > 0 && i%8 == 0 {
-			fmt.Printf("  Waiting for bridge server... (%d/%d)\n", i, maxRetries)
 		}
 	}
 
