@@ -39,7 +39,7 @@ Modern note-taking apps are often **bloated, slow, cloud-dependent, and distract
 - **Recently Opened**: Quick access to your last 10 opened notes
 - **Custom Templates**: Save your own note templates for reuse
 - **Smart Tags**: Quick access to all #hashtags with T key - search by tags in full search
-- **Multi-Language UI**: Change interface language to 9+ languages with real-time translation powered by Lingo.dev (Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian)
+- **Multi-Language UI**: Change interface language to 37 languages with real-time AI translation powered by Lingo.dev - includes Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian, Arabic, Hindi, Dutch, Polish, Turkish, Swedish, Norwegian, Danish, Finnish, Greek, Czech, Romanian, Hungarian, Vietnamese, Thai, Indonesian, Hebrew, Ukrainian, Bulgarian, Croatian, Slovak, Slovenian, Lithuanian, Latvian, Estonian, Malay, and Filipino
 
 ### Available Templates (Ctrl+T)
 
@@ -81,6 +81,11 @@ Browse all your notes with easy navigation and search filtering.
 Clean, distraction-free writing environment with auto-save and markdown support.
 
 ![Totion Notes Editor](totion-demo/totion-notes-editor.png)
+
+## Language Menu
+
+![Totion Language Menu 1](totion-demo/totion-languages-menu-1.png)
+![Totion Language Menu 2](totion-demo/totion-languages-menu-2.png)
 
 ### Translations
 
@@ -212,20 +217,25 @@ Want to use Totion in your native language? We've got you covered!
 | ------- | ------------------------------------- |
 | `Alt+T` | Open the language menu                |
 | `↑` `↓` | Move up/down through language options |
+| `PgUp` `PgDn` | Scroll faster through languages  |
 | `Enter` | Select your language                  |
 | `Esc`   | Cancel and go back                    |
 
-**Available Languages:**
+**Available Languages (37 total):**
 
-- 🇪🇸 Spanish (Español)
-- 🇫🇷 French (Français)
-- 🇩🇪 German (Deutsch)
-- 🇯🇵 Japanese (日本語)
-- 🇨🇳 Chinese (中文)
-- 🇰🇷 Korean (한국어)
-- 🇵🇹 Portuguese (Português)
-- 🇮🇹 Italian (Italiano)
-- 🇷🇺 Russian (Русский)
+- ES Spanish (Español) - FR French (Français) - DE German (Deutsch)
+- IT Italian (Italiano) - PT Portuguese (Português) - JP Japanese (日本語)
+- KR Korean (한국어) - CN Chinese (中文) - RU Russian (Русский)
+- SA Arabic (العربية) - IN Hindi (हिन्दी) - NL Dutch (Nederlands)
+- PL Polish (Polski) - TR Turkish (Türkçe) - SE Swedish (Svenska)
+- NO Norwegian (Norsk) - DK Danish (Dansk) - FI Finnish (Suomi)
+- GR Greek (Ελληνικά) - CZ Czech (Čeština) - RO Romanian (Română)
+- HU Hungarian (Magyar) - VN Vietnamese (Tiếng Việt) - TH Thai (ไทย)
+- ID Indonesian (Bahasa Indonesia) - IL Hebrew (עברית) - UA Ukrainian (Українська)
+- ES_MX Spanish Latin America - BG Bulgarian (Български) - HR Croatian (Hrvatski)
+- SK Slovak (Slovenčina) - SI Slovenian (Slovenščina) - LT Lithuanian (Lietuvių)
+- LV Latvian (Latviešu) - EE Estonian (Eesti) - MY Malay (Bahasa Melayu)
+- PH Filipino (Tagalog)
 
 **What Gets Translated:**
 
@@ -245,9 +255,11 @@ Want to use Totion in your native language? We've got you covered!
 1. Get free API key from [lingo.dev](https://lingo.dev)
 2. Create `.env` file in totion folder
 3. Add: `LINGODOTDEV_API_KEY=your_key_here`
-4. Press `Alt+T` and pick your language
+4. Press `Alt+T` and pick your language from 37 options
 
 **No API key?** App works in English by default.
+
+**Note:** Translation service runs silently in the background - no terminal logs or noise!
 
 ---
 
@@ -309,21 +321,29 @@ When you pick a language, Totion uses AI to translate the interface. It's smart 
 ### 🔧 Translation Issues?
 
 **"I see mixed languages"**  
-👉 Wait 2-3 seconds - translations are loading.
+👉 Wait 2-3 seconds - translations are loading with quality mode (95%+ accuracy).
 
 **"Seems slow"**  
-👉 Only first time. Then it's instant!
+👉 Only first time. Then it's instant! Over 100 strings are pre-cached.
 
 **"Some text not translating"**  
-👉 Error messages stay in English. That's normal.
+👉 Error messages and keyboard shortcuts stay in English. That's normal.
+
+**"Terminal shows logs/spam"**  
+👉 Not anymore! Translation service runs completely silently in background.
+
+**"Can't see all languages"**  
+👉 Use arrow keys or Page Up/Down to scroll through all 37 languages!
 
 ---
 
 ### 🎯 Translation Features
 
-- 🌍 **9 Languages**: Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian
-- 🎯 **90%+ Accuracy**: Smart context detection for better translations
-- ⚡ **Fast & Smooth**: Instant after first load
+- 🌍 **37 Languages**: Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian, Arabic, Hindi, Dutch, Polish, Turkish, Swedish, Norwegian, Danish, Finnish, Greek, Czech, Romanian, Hungarian, Vietnamese, Thai, Indonesian, Hebrew, Ukrainian, Bulgarian, Croatian, Slovak, Slovenian, Lithuanian, Latvian, Estonian, Malay, Filipino
+- 🎯 **95%+ Accuracy**: Smart context detection with quality mode enabled
+- ⚡ **Fast & Smooth**: Instant after first load with intelligent caching
+- 🔇 **Silent Operation**: No terminal spam - runs quietly in background
+- 📜 **Scrollable Menu**: Viewport scrolling for easy navigation through all languages
 - 🎨 **UI Only**: Your notes stay in your language
 
 **Requirements:** Node.js + Free API key from [lingo.dev](https://lingo.dev)
