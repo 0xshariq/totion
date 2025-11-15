@@ -1,11 +1,14 @@
 package export
 
 import (
+	"encoding/json"
 	"fmt"
 	"html/template"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
+	"time"
 )
 
 // ExportFormat represents the export format type
@@ -16,6 +19,7 @@ const (
 	FormatPDF       ExportFormat = "pdf"
 	FormatPlainText ExportFormat = "txt"
 	FormatMarkdown  ExportFormat = "md"
+	FormatJSON      ExportFormat = "json"
 )
 
 // Exporter handles exporting notes to various formats
@@ -304,5 +308,70 @@ func (e *Exporter) GetExportFormats() []ExportFormat {
 		FormatPDF,
 		FormatPlainText,
 		FormatMarkdown,
+		FormatJSON,
 	}
+}
+
+// ExportToJSON exports note metadata and content as JSON
+func (e *Exporter) ExportToJSON(content, title, outputPath string) error {
+	data := map[string]interface{}{
+		"title":       title,
+		"content":     content,
+		"exported_at": time.Now().Format(time.RFC3339),
+		"format":      "markdown",
+	}
+
+	jsonData, err := json.MarshalIndent(data, "", "  ")
+	if err != nil {
+		return fmt.Errorf("error marshaling JSON: %w", err)
+	}
+
+	if err := os.WriteFile(outputPath, jsonData, 0644); err != nil {
+		return fmt.Errorf("error writing file: %w", err)
+	}
+
+	return nil
+}
+
+// BatchExport exports multiple notes to a directory
+func (e *Exporter) BatchExport(notes []NoteData, outputDir string, format ExportFormat) error {
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("error creating output directory: %w", err)
+	}
+
+	for _, note := range notes {
+		filename := note.Title
+		var err error
+
+		switch format {
+		case FormatHTML:
+			outputPath := filepath.Join(outputDir, filename+".html")
+			err = e.ExportToHTML(note.Content, note.Title, outputPath)
+		case FormatPDF:
+			outputPath := filepath.Join(outputDir, filename+".pdf")
+			err = e.ExportToPDF(note.Content, note.Title, outputPath)
+		case FormatPlainText:
+			outputPath := filepath.Join(outputDir, filename+".txt")
+			err = e.ExportToPlainText(note.Content, outputPath)
+		case FormatMarkdown:
+			outputPath := filepath.Join(outputDir, filename+".md")
+			err = e.ExportToMarkdown(note.Content, outputPath)
+		case FormatJSON:
+			outputPath := filepath.Join(outputDir, filename+".json")
+			err = e.ExportToJSON(note.Content, note.Title, outputPath)
+		}
+
+		if err != nil {
+			return fmt.Errorf("error exporting %s: %w", note.Title, err)
+		}
+	}
+
+	return nil
+}
+
+// NoteData represents note data for batch export
+type NoteData struct {
+	Title   string
+	Content string
+	Path    string
 }

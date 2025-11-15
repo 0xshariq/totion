@@ -281,8 +281,8 @@ func (m *Model) translate(text string) string {
 		}
 	}()
 
-	// Wait for translation with timeout for quality results
-	// Short timeout since we pre-warm cache - if it's not cached yet, show English temporarily
+	// Wait for translation with very short timeout to prevent ANY UI freezing
+	// If translation takes longer, continue in background and show result on next render
 	select {
 	case result := <-done:
 		// Cache the result for instant future use
@@ -290,10 +290,16 @@ func (m *Model) translate(text string) string {
 		m.translationCache[cacheKey] = result
 		m.cacheMutex.Unlock()
 		return result
-	case <-time.After(800 * time.Millisecond):
-		// Timeout - return original text temporarily
-		// The prewarm cache will translate it in background
-		// Next render will show the translation
+	case <-time.After(300 * time.Millisecond):
+		// Timeout - continue translation in background, return English temporarily
+		// Background goroutine will cache result for next render
+		go func() {
+			// Wait for background translation to complete and cache it
+			result := <-done
+			m.cacheMutex.Lock()
+			m.translationCache[cacheKey] = result
+			m.cacheMutex.Unlock()
+		}()
 		return text
 	}
 }
@@ -305,6 +311,7 @@ func (m *Model) clearViewCache() {
 }
 
 // prewarmCache pre-translates common UI strings in background for smooth rendering
+// Uses batch translation API for much faster loading (translates multiple strings at once)
 func (m *Model) prewarmCache(strings []string) {
 	if m.currentUILanguage == "en" || m.currentUILanguage == "" {
 		return
@@ -314,27 +321,46 @@ func (m *Model) prewarmCache(strings []string) {
 		return
 	}
 
-	// Pre-translate in background without blocking UI
-	go func() {
-		for _, text := range strings {
-			cacheKey := m.currentUILanguage + ":" + text
-			// Skip if already cached
-			m.cacheMutex.RLock()
-			_, ok := m.translationCache[cacheKey]
-			m.cacheMutex.RUnlock()
-
-			if ok {
-				continue
-			}
-
-			// Translate and cache
-			translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, false)
-			if err == nil {
-				m.cacheMutex.Lock()
-				m.translationCache[cacheKey] = translated
-				m.cacheMutex.Unlock()
-			}
+	// Filter out already-cached strings
+	var untranslated []string
+	m.cacheMutex.RLock()
+	for _, text := range strings {
+		cacheKey := m.currentUILanguage + ":" + text
+		if _, ok := m.translationCache[cacheKey]; !ok {
+			untranslated = append(untranslated, text)
 		}
+	}
+	m.cacheMutex.RUnlock()
+
+	if len(untranslated) == 0 {
+		return
+	}
+
+	// Pre-translate in background using BATCH API (much faster!)
+	// This translates all strings in one API call instead of sequential calls
+	go func() {
+		translations, err := m.lingoClient.BatchTranslateTexts(untranslated, "en", m.currentUILanguage, false)
+		if err != nil {
+			// Fallback to sequential if batch fails
+			for _, text := range untranslated {
+				translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, false)
+				if err == nil {
+					cacheKey := m.currentUILanguage + ":" + text
+					m.cacheMutex.Lock()
+					m.translationCache[cacheKey] = translated
+					m.cacheMutex.Unlock()
+				}
+			}
+			return
+		}
+
+		// Cache all batch results
+		m.cacheMutex.Lock()
+		for original, translated := range translations {
+			cacheKey := m.currentUILanguage + ":" + original
+			m.translationCache[cacheKey] = translated
+		}
+		m.cacheMutex.Unlock()
 	}()
 }
 

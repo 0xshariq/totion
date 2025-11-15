@@ -5,7 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
+
+	"github.com/0xshariq/totion/internal/features/export"
+	"github.com/0xshariq/totion/internal/features/search"
+	"github.com/0xshariq/totion/internal/features/tags"
 )
 
 // Notebook represents a folder/notebook containing notes
@@ -388,4 +393,226 @@ func (nm *NotebookManager) GetNotebooksByTag(tag string) ([]*Notebook, error) {
 	}
 
 	return filtered, nil
+}
+
+// SearchInNotebook searches for text within a notebook's notes
+func (nm *NotebookManager) SearchInNotebook(notebookPath, query string) ([]search.SearchResult, error) {
+	searchMgr := search.NewSearchManager(notebookPath)
+	return searchMgr.Search(query)
+}
+
+// GetTagsInNotebook gets all unique tags from notes in a notebook
+func (nm *NotebookManager) GetTagsInNotebook(notebookPath string) ([]string, error) {
+	tagSet := make(map[string]bool)
+
+	notes, err := nm.GetNotesInNotebook(notebookPath)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, notePath := range notes {
+		content, err := os.ReadFile(notePath)
+		if err != nil {
+			continue
+		}
+
+		noteTags := tags.ExtractTags(string(content))
+		for _, tag := range noteTags {
+			tagSet[tag] = true
+		}
+	}
+
+	// Convert to slice
+	uniqueTags := make([]string, 0, len(tagSet))
+	for tag := range tagSet {
+		uniqueTags = append(uniqueTags, tag)
+	}
+
+	return uniqueTags, nil
+}
+
+// ExportNotebook exports all notes in a notebook to a specified format
+func (nm *NotebookManager) ExportNotebook(notebookPath, outputDir string, format export.ExportFormat) error {
+	notes, err := nm.GetNotesInNotebook(notebookPath)
+	if err != nil {
+		return fmt.Errorf("error getting notes: %w", err)
+	}
+
+	if err := os.MkdirAll(outputDir, 0755); err != nil {
+		return fmt.Errorf("error creating output directory: %w", err)
+	}
+
+	exporter := export.NewExporter()
+	exportData := []export.NoteData{}
+
+	for _, notePath := range notes {
+		content, err := os.ReadFile(notePath)
+		if err != nil {
+			continue
+		}
+
+		title := strings.TrimSuffix(filepath.Base(notePath), filepath.Ext(notePath))
+		exportData = append(exportData, export.NoteData{
+			Title:   title,
+			Content: string(content),
+			Path:    notePath,
+		})
+	}
+
+	return exporter.BatchExport(exportData, outputDir, format)
+}
+
+// GetNotebookStatistics returns statistics for a notebook
+func (nm *NotebookManager) GetNotebookStatistics(notebookPath string) (*NotebookStats, error) {
+	notes, err := nm.GetNotesInNotebook(notebookPath)
+	if err != nil {
+		return nil, err
+	}
+
+	stats := &NotebookStats{
+		TotalNotes: len(notes),
+	}
+
+	for _, notePath := range notes {
+		info, err := os.Stat(notePath)
+		if err != nil {
+			continue
+		}
+
+		stats.TotalSize += info.Size()
+
+		content, err := os.ReadFile(notePath)
+		if err != nil {
+			continue
+		}
+
+		words := len(strings.Fields(string(content)))
+		stats.TotalWords += words
+	}
+
+	tags, _ := nm.GetTagsInNotebook(notebookPath)
+	stats.UniqueTags = len(tags)
+
+	return stats, nil
+}
+
+// NotebookStats represents notebook statistics
+type NotebookStats struct {
+	TotalNotes int
+	TotalSize  int64
+	TotalWords int
+	UniqueTags int
+}
+
+// DuplicateNotebook creates a copy of a notebook
+func (nm *NotebookManager) DuplicateNotebook(srcPath, newName string) error {
+	destPath := filepath.Join(filepath.Dir(srcPath), newName)
+
+	if _, err := os.Stat(destPath); err == nil {
+		return fmt.Errorf("notebook '%s' already exists", newName)
+	}
+
+	// Copy directory recursively
+	return nm.copyDir(srcPath, destPath)
+}
+
+// copyDir recursively copies a directory
+func (nm *NotebookManager) copyDir(src, dst string) error {
+	src = filepath.Clean(src)
+	dst = filepath.Clean(dst)
+
+	srcInfo, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if err := os.MkdirAll(dst, srcInfo.Mode()); err != nil {
+		return err
+	}
+
+	entries, err := os.ReadDir(src)
+	if err != nil {
+		return err
+	}
+
+	for _, entry := range entries {
+		srcPath := filepath.Join(src, entry.Name())
+		dstPath := filepath.Join(dst, entry.Name())
+
+		if entry.IsDir() {
+			if err := nm.copyDir(srcPath, dstPath); err != nil {
+				return err
+			}
+		} else {
+			if err := nm.copyFile(srcPath, dstPath); err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
+}
+
+// copyFile copies a single file
+func (nm *NotebookManager) copyFile(src, dst string) error {
+	data, err := os.ReadFile(src)
+	if err != nil {
+		return err
+	}
+
+	info, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	return os.WriteFile(dst, data, info.Mode())
+}
+
+// ArchiveNotebook creates a zip archive of a notebook
+func (nm *NotebookManager) ArchiveNotebook(notebookPath, archivePath string) error {
+	// Simple archive by exporting all notes
+	return nm.ExportNotebook(notebookPath, archivePath, export.FormatMarkdown)
+}
+
+// GetRecentlyModifiedNotes returns recently modified notes in a notebook
+func (nm *NotebookManager) GetRecentlyModifiedNotes(notebookPath string, limit int) ([]string, error) {
+	type NoteInfo struct {
+		Path    string
+		ModTime time.Time
+	}
+
+	notes, err := nm.GetNotesInNotebook(notebookPath)
+	if err != nil {
+		return nil, err
+	}
+
+	noteInfos := []NoteInfo{}
+	for _, notePath := range notes {
+		info, err := os.Stat(notePath)
+		if err != nil {
+			continue
+		}
+
+		noteInfos = append(noteInfos, NoteInfo{
+			Path:    notePath,
+			ModTime: info.ModTime(),
+		})
+	}
+
+	// Sort by modification time (newest first)
+	for i := 0; i < len(noteInfos)-1; i++ {
+		for j := i + 1; j < len(noteInfos); j++ {
+			if noteInfos[i].ModTime.Before(noteInfos[j].ModTime) {
+				noteInfos[i], noteInfos[j] = noteInfos[j], noteInfos[i]
+			}
+		}
+	}
+
+	// Return top N
+	result := []string{}
+	for i := 0; i < len(noteInfos) && i < limit; i++ {
+		result = append(result, noteInfos[i].Path)
+	}
+
+	return result, nil
 }

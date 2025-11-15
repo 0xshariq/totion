@@ -19,9 +19,12 @@ func GetKeyboardShortcuts(translate func(string) string) string {
 		textStyle.Render(translate("  Ctrl+S      Save & close (auto-save enabled)")) + "\n\n" +
 		textStyle.Render(translate("SEARCH & ORGANIZATION:")) + "\n" +
 		textStyle.Render(translate("  Ctrl+/      Full-text search across notes")) + "\n" +
+		textStyle.Render(translate("              • Search text: type any word")) + "\n" +
+		textStyle.Render(translate("              • Search tags: type #tagname")) + "\n" +
+		textStyle.Render(translate("  T           View tags browser (all #hashtags)")) + "\n" +
+		textStyle.Render(translate("  B           Notebooks (folder organization)")) + "\n" +
 		textStyle.Render(translate("  #           Type tags in notes (e.g., #work)")) + "\n" +
-		textStyle.Render(translate("  /           Search/filter notes in list")) + "\n" +
-		textStyle.Render(translate("  B           Notebooks (folder organization)")) + "\n\n" +
+		textStyle.Render(translate("  /           Search/filter notes in list (use Ctrl+L to open list)")) + "\n\n" +
 		textStyle.Render(translate("NAVIGATION:")) + "\n" +
 		textStyle.Render(translate("  ↑ ↓         Navigate lists")) + "\n" +
 		textStyle.Render(translate("  Tab         Switch format (Markdown/Text)")) + "\n\n" +

@@ -280,7 +280,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 			return true, m, nil
 		}
 
-	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "t", "T":
+	case "1", "2", "3", "4", "5", "6", "7", "8", "9", "0":
 		if m.state == ViewHelp && m.helpTopic == "" {
 			// Select main help topic
 			m.helpTopic = msg.String()
@@ -322,6 +322,13 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 		}
 		if m.state == ViewSelectNotebookForNote {
 			m.selectNotebookForNote(msg.String())
+			return true, m, nil
+		}
+
+	case "t", "T":
+		if m.state == ViewHome {
+			m.state = ViewTags
+			m.statusMessage = ""
 			return true, m, nil
 		}
 	}
