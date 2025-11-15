@@ -2,28 +2,43 @@
 
 A powerful, fast, and lightweight note-taking application for your terminal, built with Go and Bubble Tea.
 
+## 🎯 Problem Statement
+
+Modern note-taking apps are often **bloated, slow, cloud-dependent, and distract with fancy features**. Developers and power users need a **fast, keyboard-driven, offline-first solution** that works seamlessly in the terminal where they already spend most of their time.
+
+**Totion solves this by providing:**
+
+- ⚡ **Lightning-fast** terminal interface with zero startup time
+- ⌨️ **100% keyboard-driven** workflow - no mouse needed
+- 📝 **Markdown & Plain Text** support - your notes, your way
+- 🌐 **Multi-language UI** - Work in your native language with AI-powered translation
+- 🔒 **Privacy-first** - All notes stored locally, you own your data
+- 📁 **Zero lock-in** - Standard markdown files, use any editor
+- 🎨 **Distraction-free** - Clean, minimal interface that stays out of your way
+
 ## 🚀 Features
 
 ### Core Features ✅ (Fully Working)
 
 - **Multi-Format Support**: Create notes in Markdown (.md) or Plain Text (.txt)
 - **File Management**: Create, read, update, and delete notes with confirmation
-- **Fast Search**: Quick filtering through your notes with `/` key
+- **Advanced Search**: Full-text search across all notes with tag search support (#tagname)
 - **Keyboard-Driven**: Full keyboard navigation and shortcuts
 - **Clean TUI**: Simple and intuitive terminal user interface with 2-3 colors
 - **Templates**: 7 Quick note templates (Meeting, Todo, Journal, Project, Code, Book, Blank)
 - **Themes**: 6 Color schemes available (Default Blue, Dark, Light, Monokai, Solarized, Nord)
 - **Help System**: Comprehensive help with menu-based navigation (select topics 1-9)
-- **Export**: Export notes to HTML, PDF, Plain Text, or Markdown formats
-- **Import**: Import from Notion, Obsidian, or plain text files (.md/.txt from Git repos)
+- **Advanced Export**: Export notes to HTML, PDF, JSON, Plain Text, or Markdown - with batch export
+- **Enhanced Import**: Import from Notion, Obsidian, JSON, CSV, or batch import entire directories
 - **Statistics**: View word count, reading time, and vault statistics
 - **Git Integration**: Initialize repo, commit changes, view history and status
 - **Sync & Backup**: Full vault backup/restore with cloud sync support
-- **Notebooks**: Organize notes in folders/notebooks for better structure
+- **Smart Notebooks**: Organize notes in folders with search, tags, export, and statistics per notebook
 - **Wiki Linking**: Connect notes with `[[Note Title]]` syntax (Ctrl+K in editor)
 - **Auto-Save**: Automatically saves notes every 30 seconds while editing
 - **Recently Opened**: Quick access to your last 10 opened notes
 - **Custom Templates**: Save your own note templates for reuse
+- **Smart Tags**: Quick access to all #hashtags with T key - search by tags in full search
 - **Multi-Language UI**: Change interface language to 9+ languages with real-time translation powered by Lingo.dev (Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian)
 
 ### Available Templates (Ctrl+T)
@@ -153,12 +168,13 @@ make clean
 | `Ctrl+H` or `?` | Show help menu (navigate with numbers, scroll with ↑↓) |
 | `Ctrl+T`        | Open templates menu                                    |
 | `P`             | Open themes menu                                       |
-| `Alt+E`         | Export current note                                    |
-| `Alt+I`         | Import notes from other apps                           |
+| `T`             | View tags browser (all #hashtags in notes)             |
+| `Alt+E`         | Export note (HTML, PDF, JSON, Markdown, Text)          |
+| `Alt+I`         | Import notes (Notion, Obsidian, JSON, CSV)             |
 | `S`             | View statistics dashboard                              |
 | `G`             | Git operations menu                                    |
 | `Alt+Y`         | Sync & backup menu                                     |
-| `B`             | Notebooks/folders manager                              |
+| `B`             | Notebooks/folders manager (with search & export)       |
 | `Alt+P`         | Pin/unpin note                                         |
 | `/`             | Search notes                                           |
 | `Alt+T`         | Change UI language (translate interface)               |
@@ -185,18 +201,20 @@ make clean
 | `Esc`         | Discard changes and close editor     |
 | Type normally | Edit note content                    |
 
-#### 🌐 UI Language Translation (Press Alt+T anywhere)
+#### 🌐 Change Language (Press Alt+T)
 
-Change the entire interface language with real-time translation powered by Lingo.dev!
+Want to use Totion in your native language? We've got you covered!
 
-| Key     | Action                               |
-| ------- | ------------------------------------ |
-| `Alt+T` | Open language selector               |
-| `↑` `↓` | Navigate through available languages |
-| `Enter` | Change UI language to selected       |
-| `Esc`   | Cancel language selection            |
+**How to Change Language:**
 
-**Supported Languages:**
+| Key     | What it does                          |
+| ------- | ------------------------------------- |
+| `Alt+T` | Open the language menu                |
+| `↑` `↓` | Move up/down through language options |
+| `Enter` | Select your language                  |
+| `Esc`   | Cancel and go back                    |
+
+**Available Languages:**
 
 - 🇪🇸 Spanish (Español)
 - 🇫🇷 French (Français)
@@ -208,97 +226,148 @@ Change the entire interface language with real-time translation powered by Lingo
 - 🇮🇹 Italian (Italiano)
 - 🇷🇺 Russian (Русский)
 
-**Features:**
+**What Gets Translated:**
 
-- Translates ALL UI text: menus, buttons, help sections, and keyboard shortcuts
-- Does NOT translate your note content - only the interface
-- Real-time translation using Lingo.dev API
-- Translation cache for fast performance
-- Works from any screen (home, editor, help, etc.)
+✅ All menus and buttons  
+✅ Help text and instructions  
+✅ Keyboard shortcut descriptions  
+✅ Status messages and notifications
 
-**Setup:**
+❌ Your note content (stays in your language)  
+❌ File names and folders  
+❌ Error technical details
 
-1. Get a free API key from [lingo.dev](https://lingo.dev)
-2. Create a `.env` file in your totion directory:
-   ```bash
-   LINGODOTDEV_API_KEY=your_api_key_here
-   ```
-3. The bridge server will automatically start when you launch the app
-4. Press `Alt+T` to start translating!
+---
 
-**Translation Quality (>90% Accuracy):**
+### 🚀 Quick Setup for Translation
 
-- **Quality Mode Enabled**: Uses Lingo.dev's high-accuracy translation (not fast mode)
-- **Context Preservation**: Technical UI terms are preserved correctly
-- **Smart Caching**: Translations cached in Redis/memory for instant reuse
-- **Auto-Start Bridge**: Node.js bridge server starts automatically with the app
-- **Timeout Protection**: 800ms timeout prevents UI freezing
-- **No Manual Server**: Bridge server auto-starts and auto-stops with the app
+**Step 1: Get a Free API Key**
 
-**Performance & UI Responsiveness:**
+1. Visit [lingo.dev](https://lingo.dev) and sign up (it's free!)
+2. Copy your API key
 
-⚡ **Smooth Translation Experience:**
+**Step 2: Add the Key to Your App**
 
-- **First Load**: New strings translate on-demand (~800ms max each)
-- **Cached Strings**: Instant (<1ms) for all previously translated text
-- **Pre-warmed Cache**: Common UI strings translated in background automatically
-- **No UI Blocking**: Short timeout ensures app stays responsive
-- **Progressive Loading**: Shows English temporarily, then updates with translation
+1. Open your totion folder
+2. Create a file called `.env`
+3. Add this line: `LINGODOTDEV_API_KEY=your_key_here`
+4. Save the file
 
-💡 **Avoiding UI Freezing:**
+**Step 3: Start Using**
 
-1. **Cache Pre-warming**: When you select a language, 20+ common strings are pre-translated in the background
-2. **Incremental Translation**: UI strings translate one at a time as needed (not all at once)
-3. **Smart Timeout**: If translation takes >800ms, shows English text temporarily
-4. **Background Translation**: Slow translations happen in background, appear on next render
-5. **Memory Caching**: Stores up to 2000 translations for instant reuse
+1. Launch Totion: `./totion` or `make run`
+2. Press `Alt+T` from anywhere
+3. Pick your language
+4. Done! Everything is now translated
 
-⚠️ **First-Time Translation Notes:**
+**No API Key? No Problem!**  
+The app works perfectly in English without any setup.
 
-- Initial language change may show mixed English/translated text briefly
-- This is normal - strings are being translated in the background
-- Navigate through menus to trigger translation of that view's text
-- After first pass, all translations are cached = instant performance
-- Translation happens per-view, not globally (more responsive)
+---
 
-**Technical Details:**
+### 🔍 Advanced Search Features
 
-The translation system uses a bridge server architecture:
+Totion provides powerful search capabilities to help you find notes quickly.
 
-```
-Go App → Bridge Server (localhost:3737) → Lingo.dev JavaScript SDK → Translated UI
-```
+**Full-Text Search (Ctrl+/ from anywhere):**
 
-**Bridge Server Features:**
+Search for any text across all your notes instantly. The search looks through:
+- Note content (line by line)
+- All markdown and text files in your vault
+- Shows line numbers and snippets for context
 
-- **Auto-Start**: Automatically starts when you launch Totion
-- **Auto-Stop**: Gracefully stops when you quit the app (Ctrl+C or Q)
-- **Health Checks**: Verifies server is running before starting a new instance
-- **Dependency Management**: Auto-installs npm packages if needed
-- **Fallback Commands**: Tries pnpm first, falls back to npm/node
-- **Graceful Shutdown**: Sends interrupt signal, waits 2s, then force kills if needed
-- **No Manual Management**: Zero user intervention required
+**Tag Search:**
 
-**Bridge Server Reliability:**
+Search specifically for notes containing tags:
+- Type `#tagname` in the search to find all notes with that tag
+- Example: `#work` finds all notes tagged with #work
+- Example: `#meeting` finds meeting notes
+- Case-insensitive matching
 
-- Waits up to 10 seconds for server to be ready
-- Retries connection every 300ms
-- Shows startup status in terminal
-- Handles port conflicts gracefully
-- Redis caching (optional, falls back to memory cache)
-- Quality mode translation for hackathon-grade accuracy
-- Only translates UI text, never your note content
+**Quick Filter (/ key in list view):**
 
-**Troubleshooting Translation:**
+Fast filtering of notes in the list view by filename or content.
 
-| Issue                                       | Solution                                                             |
-| ------------------------------------------- | -------------------------------------------------------------------- |
-| UI shows mixed English/translated text      | Normal on first load - navigate through views to trigger translation |
-| Translation seems slow                      | First time only - subsequent loads are instant (cached)              |
-| App briefly freezes when selecting language | Pre-warming cache in background - app remains usable                 |
-| Bridge server won't start                   | Check Node.js/npm installed, or set LINGODOTDEV_API_KEY in .env      |
-| Some text not translating                   | Technical errors/file paths are intentionally not translated         |
-| Want faster translation                     | Translation is cached - revisit screens to see instant results       |
+**Tag Browser (T key):**
+
+View all tags in your vault organized by frequency. Click any tag to see all notes containing it.
+
+**Search Tips:**
+- Regular text search: Just type your query
+- Tag search: Prefix with # (e.g., #project)
+- Combine with notebooks: Search within specific folders
+- Results show up to 100 matches with context snippets
+
+---
+
+### 💡 How Translation Works
+
+**The Simple Version:**
+
+When you select a language, Totion uses AI-powered translation with smart context detection. It automatically understands whether text is a button, help message, or keyboard shortcut and translates accordingly.
+
+**Accuracy Features:**
+
+✅ **Context Detection**: Knows the difference between UI labels, instructions, and status messages  
+✅ **Technical Glossary**: Consistent translation of terms like "note", "markdown", "export"  
+✅ **Quality Mode**: Uses slower but more accurate translation (not fast mode)  
+✅ **Retry Logic**: Automatically retries failed translations  
+✅ **Formatting Preservation**: Keeps newlines, markdown, and special characters intact
+
+**Speed & Performance:**
+
+🐢 **First time you switch language:**
+
+- Takes 2-3 seconds to load all common UI text
+- Uses smart batch translation (translates many strings at once)
+- You'll see everything translated within seconds
+
+⚡ **After that:**
+
+- Everything is instant (saved in memory)
+- No delays or waiting
+- Smooth as butter!
+
+**No Freezing:**
+
+✅ 300ms timeout: App never freezes, always stays responsive  
+✅ Background loading: Translations load while you use the app  
+✅ Batch translation: Loads 50+ strings in one go (much faster!)  
+✅ Smart caching: Once translated, always instant
+
+---
+
+### 🔧 Translation Troubleshooting
+
+**"I see mixed English and my language"**  
+👉 Normal for the first 2-3 seconds after switching. The app is batch-loading translations in the background.
+
+**"Translation seems slow"**  
+👉 Only the first time. Uses batch translation to load everything quickly. After that, instant!
+
+**"App freezes when I select a language"**  
+👉 App should NEVER freeze now! It has a 300ms timeout and loads everything in the background.
+
+**"Bridge server won't start"**  
+👉 Make sure you have Node.js installed. The app auto-installs everything else.
+
+**"Some text isn't translating"**  
+👉 Error messages and file paths stay in English on purpose. UI text is what gets translated.
+
+---
+
+### 🎯 Translation Features
+
+- 🌍 **9 Languages**: Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian
+- 🎯 **Maximum Accuracy**: 90%+ with quality mode + context detection + technical glossary
+- ⚡ **Fast**: Instant after first load (cached in memory)
+- 🔄 **Auto-Start**: No manual setup needed
+- 🎨 **UI Only**: Your notes stay in your language
+- 🔁 **Retry Logic**: Automatic retries with exponential backoff for reliability
+- 📚 **Smart Context**: Detects UI labels, help text, shortcuts, and status messages
+- 🔧 **Technical Glossary**: Consistent translation of technical terms
+
+**Requirements:** Node.js + Free API key from [lingo.dev](https://lingo.dev)
 
 **Note:** If API key is not set, the app will work fine in English.
 
@@ -755,8 +824,9 @@ Built with these amazing libraries:
 - **[Bubble Tea](https://github.com/charmbracelet/bubbletea)** - The Go TUI framework powering the interface
 - **[Bubbles](https://github.com/charmbracelet/bubbles)** - Ready-to-use TUI components (textarea, textinput, list)
 - **[Lip Gloss](https://github.com/charmbracelet/lipgloss)** - Terminal styling and colors
+- **[Lingo.dev](https://lingo.dev)** - AI-powered translation service
 
-Special thanks to the Charm community for creating excellent terminal tools!
+Special thanks to the Charm community for creating excellent terminal tools and Lingo.dev for making multi-language support possible!
 
 ## 🌟 Star History
 
