@@ -239,29 +239,14 @@ Want to use Totion in your native language? We've got you covered!
 
 ---
 
-### 🚀 Quick Setup for Translation
+### 🚀 Setup Translation (Optional)
 
-**Step 1: Get a Free API Key**
+1. Get free API key from [lingo.dev](https://lingo.dev)
+2. Create `.env` file in totion folder
+3. Add: `LINGODOTDEV_API_KEY=your_key_here`
+4. Press `Alt+T` and pick your language
 
-1. Visit [lingo.dev](https://lingo.dev) and sign up (it's free!)
-2. Copy your API key
-
-**Step 2: Add the Key to Your App**
-
-1. Open your totion folder
-2. Create a file called `.env`
-3. Add this line: `LINGODOTDEV_API_KEY=your_key_here`
-4. Save the file
-
-**Step 3: Start Using**
-
-1. Launch Totion: `./totion` or `make run`
-2. Press `Alt+T` from anywhere
-3. Pick your language
-4. Done! Everything is now translated
-
-**No API Key? No Problem!**  
-The app works perfectly in English without any setup.
+**No API key?** App works in English by default.
 
 ---
 
@@ -302,74 +287,47 @@ View all tags in your vault organized by frequency. Click any tag to see all not
 
 ### 💡 How Translation Works
 
-**The Simple Version:**
+When you pick a language, Totion uses AI to translate the interface. It's smart enough to understand buttons, menus, and shortcuts.
 
-When you select a language, Totion uses AI-powered translation with smart context detection. It automatically understands whether text is a button, help message, or keyboard shortcut and translates accordingly.
+**First Time:** Takes 2-3 seconds to load translations
+**After That:** Instant! Everything is cached
 
-**Accuracy Features:**
+**What Gets Translated:**
+- Menus and buttons
+- Help text and instructions  
+- Keyboard shortcuts
+- Status messages
 
-✅ **Context Detection**: Knows the difference between UI labels, instructions, and status messages  
-✅ **Technical Glossary**: Consistent translation of terms like "note", "markdown", "export"  
-✅ **Quality Mode**: Uses slower but more accurate translation (not fast mode)  
-✅ **Retry Logic**: Automatically retries failed translations  
-✅ **Formatting Preservation**: Keeps newlines, markdown, and special characters intact
-
-**Speed & Performance:**
-
-🐢 **First time you switch language:**
-
-- Takes 2-3 seconds to load all common UI text
-- Uses smart batch translation (translates many strings at once)
-- You'll see everything translated within seconds
-
-⚡ **After that:**
-
-- Everything is instant (saved in memory)
-- No delays or waiting
-- Smooth as butter!
-
-**No Freezing:**
-
-✅ 300ms timeout: App never freezes, always stays responsive  
-✅ Background loading: Translations load while you use the app  
-✅ Batch translation: Loads 50+ strings in one go (much faster!)  
-✅ Smart caching: Once translated, always instant
+**What Stays the Same:**
+- Your note content
+- File names
+- Error messages
 
 ---
 
-### 🔧 Translation Troubleshooting
+### 🔧 Translation Issues?
 
-**"I see mixed English and my language"**  
-👉 Normal for the first 2-3 seconds after switching. The app is batch-loading translations in the background.
+**"I see mixed languages"**  
+👉 Wait 2-3 seconds - translations are loading.
 
-**"Translation seems slow"**  
-👉 Only the first time. Uses batch translation to load everything quickly. After that, instant!
+**"Seems slow"**  
+👉 Only first time. Then it's instant!
 
-**"App freezes when I select a language"**  
-👉 App should NEVER freeze now! It has a 300ms timeout and loads everything in the background.
-
-**"Bridge server won't start"**  
-👉 Make sure you have Node.js installed. The app auto-installs everything else.
-
-**"Some text isn't translating"**  
-👉 Error messages and file paths stay in English on purpose. UI text is what gets translated.
+**"Some text not translating"**  
+👉 Error messages stay in English. That's normal.
 
 ---
 
 ### 🎯 Translation Features
 
 - 🌍 **9 Languages**: Spanish, French, German, Japanese, Chinese, Korean, Portuguese, Italian, Russian
-- 🎯 **Maximum Accuracy**: 90%+ with quality mode + context detection + technical glossary
-- ⚡ **Fast**: Instant after first load (cached in memory)
-- 🔄 **Auto-Start**: No manual setup needed
+- 🎯 **90%+ Accuracy**: Smart context detection for better translations
+- ⚡ **Fast & Smooth**: Instant after first load
 - 🎨 **UI Only**: Your notes stay in your language
-- 🔁 **Retry Logic**: Automatic retries with exponential backoff for reliability
-- 📚 **Smart Context**: Detects UI labels, help text, shortcuts, and status messages
-- 🔧 **Technical Glossary**: Consistent translation of technical terms
 
 **Requirements:** Node.js + Free API key from [lingo.dev](https://lingo.dev)
 
-**Note:** If API key is not set, the app will work fine in English.
+**Note:** Works in English without API key.
 
 #### 📤 Export Menu (Press Alt+E from home)
 
