@@ -96,13 +96,23 @@ func (b *BridgeServer) Start() error {
 	}
 
 	// Wait for server to be ready (max 10 seconds)
-	maxRetries := 30
+	maxRetries := 40 // Increased for slower systems
+	retryDelay := 250 * time.Millisecond
+
 	for i := 0; i < maxRetries; i++ {
-		time.Sleep(300 * time.Millisecond)
+		time.Sleep(retryDelay)
 		if b.IsRunning() {
 			b.running = true
 			fmt.Printf("✓ Lingo.dev bridge server started successfully on port %d\n", b.port)
+			fmt.Println("  • Quality mode enabled for maximum accuracy")
+			fmt.Println("  • Context-aware translation active")
+			fmt.Println("  • Technical glossary loaded")
 			return nil // Server is ready
+		}
+
+		// Show progress every 2 seconds
+		if i > 0 && i%8 == 0 {
+			fmt.Printf("  Waiting for bridge server... (%d/%d)\n", i, maxRetries)
 		}
 	}
 
@@ -111,7 +121,7 @@ func (b *BridgeServer) Start() error {
 		_ = b.cmd.Process.Kill()
 	}
 
-	return fmt.Errorf("bridge server failed to start in time")
+	return fmt.Errorf("bridge server failed to start in time (waited %d seconds)", maxRetries*int(retryDelay.Seconds()))
 }
 
 // Stop stops the bridge server

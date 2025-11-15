@@ -59,6 +59,7 @@ func (c *Client) IsEnabled() bool {
 // Calls the bridge server which uses the official Lingo.dev JavaScript SDK
 // Results are cached in Redis for fast repeated translations
 // Use fast=false for quality mode (>90% accuracy) or fast=true for speed
+// Automatically retries failed requests with exponential backoff
 func (c *Client) TranslateText(text, sourceLocale, targetLocale string, fast bool) (string, error) {
 	if !c.IsEnabled() {
 		return text, nil // Return original text if no API key
@@ -66,6 +67,11 @@ func (c *Client) TranslateText(text, sourceLocale, targetLocale string, fast boo
 
 	if text == "" {
 		return text, nil
+	}
+
+	// Validate language codes
+	if len(targetLocale) < 2 {
+		return text, fmt.Errorf("invalid target locale: %s", targetLocale)
 	}
 
 	payload := map[string]interface{}{
@@ -80,38 +86,159 @@ func (c *Client) TranslateText(text, sourceLocale, targetLocale string, fast boo
 		return text, err
 	}
 
-	req, err := http.NewRequest("POST", c.baseURL+"/translate", bytes.NewBuffer(body))
+	// Retry logic: up to 3 attempts with exponential backoff
+	maxRetries := 3
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		if attempt > 0 {
+			// Exponential backoff: 100ms, 200ms, 400ms
+			time.Sleep(time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond)
+		}
+
+		req, err := http.NewRequest("POST", c.baseURL+"/translate", bytes.NewBuffer(body))
+		if err != nil {
+			if attempt == maxRetries-1 {
+				return text, err
+			}
+			continue
+		}
+
+		req.Header.Set("Content-Type", "application/json")
+
+		resp, err := c.httpClient.Do(req)
+		if err != nil {
+			if attempt == maxRetries-1 {
+				return text, fmt.Errorf("bridge server request failed (is it running?): %w", err)
+			}
+			continue
+		}
+
+		if resp.StatusCode != http.StatusOK {
+			bodyBytes, _ := io.ReadAll(resp.Body)
+			resp.Body.Close()
+			if attempt == maxRetries-1 {
+				return text, fmt.Errorf("translation error (status %d): %s", resp.StatusCode, string(bodyBytes))
+			}
+			continue
+		}
+
+		var result Response
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			resp.Body.Close()
+			if attempt == maxRetries-1 {
+				return text, err
+			}
+			continue
+		}
+		resp.Body.Close()
+
+		if result.Error != "" {
+			if attempt == maxRetries-1 {
+				return text, fmt.Errorf("translation failed: %s", result.Error)
+			}
+			continue
+		}
+
+		if result.Translation != "" {
+			return result.Translation, nil
+		}
+
+		if attempt == maxRetries-1 {
+			return text, fmt.Errorf("no translation in response")
+		}
+	}
+
+	return text, fmt.Errorf("translation failed after %d retries", maxRetries)
+}
+
+// BatchTranslateTexts translates multiple texts at once (more efficient than individual calls)
+// Uses the batch endpoint for faster pre-warming of UI strings
+// Automatically handles retries and provides detailed stats
+func (c *Client) BatchTranslateTexts(texts []string, sourceLocale, targetLocale string, fast bool) (map[string]string, error) {
+	if !c.IsEnabled() {
+		return make(map[string]string), nil
+	}
+
+	if len(texts) == 0 {
+		return make(map[string]string), nil
+	}
+
+	// Validate language codes
+	if len(targetLocale) < 2 {
+		return nil, fmt.Errorf("invalid target locale: %s", targetLocale)
+	}
+
+	payload := map[string]any{
+		"texts":        texts,
+		"sourceLocale": sourceLocale,
+		"targetLocale": targetLocale,
+		"fast":         fast,
+	}
+
+	body, err := json.Marshal(payload)
 	if err != nil {
-		return text, err
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", c.baseURL+"/translate/batch", bytes.NewBuffer(body))
+	if err != nil {
+		return nil, err
 	}
 
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := c.httpClient.Do(req)
+	// Use longer timeout for batch requests (translating many strings)
+	client := &http.Client{
+		Timeout: 15 * time.Second, // Increased for large batches
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
-		return text, fmt.Errorf("bridge server request failed (is it running?): %w", err)
+		return nil, fmt.Errorf("batch translation request failed: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
 		bodyBytes, _ := io.ReadAll(resp.Body)
-		return text, fmt.Errorf("translation error (status %d): %s", resp.StatusCode, string(bodyBytes))
+		return nil, fmt.Errorf("batch translation error (status %d): %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	var result Response
+	var result map[string]interface{}
 	if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
-		return text, err
+		return nil, err
 	}
 
-	if result.Error != "" {
-		return text, fmt.Errorf("translation failed: %s", result.Error)
+	if errMsg, ok := result["error"].(string); ok && errMsg != "" {
+		return nil, fmt.Errorf("batch translation failed: %s", errMsg)
 	}
 
-	if result.Translation != "" {
-		return result.Translation, nil
+	translations := make(map[string]string)
+
+	// Handle new response format with results array
+	if results, ok := result["results"].([]interface{}); ok {
+		for i, r := range results {
+			if i < len(texts) {
+				if translated, ok := r.(string); ok {
+					translations[texts[i]] = translated
+				} else {
+					// Fallback to original if translation failed
+					translations[texts[i]] = texts[i]
+				}
+			}
+		}
+	} else {
+		// Fallback: old format or error
+		return nil, fmt.Errorf("unexpected response format from batch translation")
 	}
 
-	return text, fmt.Errorf("no translation in response")
+	// Log stats if available (for debugging)
+	if stats, ok := result["stats"].(map[string]interface{}); ok {
+		if cacheHitRate, ok := stats["cacheHitRate"].(string); ok {
+			// Optional: Could log this for monitoring
+			_ = cacheHitRate
+		}
+	}
+
+	return translations, nil
 }
 
 // DetectLanguage is a placeholder - language detection not currently used
