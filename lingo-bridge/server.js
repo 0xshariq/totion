@@ -66,10 +66,18 @@ const protectText = (text) => {
   const placeholders = [];
   let protected = text;
   
-  // Protect keyboard shortcuts like Ctrl+N, Alt+T
-  protected = protected.replace(/(Ctrl|Alt|Shift|Esc|Enter|Tab)(\+[A-Z0-9])?/gi, (match) => {
-    const placeholder = `__PRESERVE_${placeholders.length}__`;
-    placeholders.push(match);
+  // Protect keyboard shortcuts ONLY when they appear as standalone or with arrows
+  // Match patterns like "Ctrl+N", "Alt+T →", but not inside sentences
+  protected = protected.replace(/(^|\s|•\s*)(Ctrl|Alt|Shift|Esc|Enter|Tab)(\+[A-Z0-9])?(\s*→)?/gi, (match, prefix, key, plus, arrow) => {
+    const placeholder = prefix + `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(key + (plus || '') + (arrow || ''));
+    return placeholder;
+  });
+  
+  // Protect single letter shortcuts at start (like "Q →", "P →", "B →", "S →", "G →", "T →")
+  protected = protected.replace(/(^|\s|•\s*)([A-Z])\s*(→)/g, (match, prefix, letter, arrow) => {
+    const placeholder = prefix + `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(letter + ' ' + arrow);
     return placeholder;
   });
   
@@ -80,15 +88,15 @@ const protectText = (text) => {
     return placeholder;
   });
   
-  // Protect arrows and special symbols
-  protected = protected.replace(/→|←|↑|↓|✓|✗|•|📝|📋|📊|💡|🎯|✨|⚡|🔒|📁|🌐/g, (match) => {
+  // Protect emojis and special symbols
+  protected = protected.replace(/[←↑↓✓✗•📝📋📊💡🎯✨⚡🔒📁🌐🎬✏️💾📤📥🔄☁️📂❓🎨📜🔗⚠️📌📆✅🚀📖🔍⏰🗓️📈📉🗂️🔐🎓🌟]/g, (match) => {
     const placeholder = `__PRESERVE_${placeholders.length}__`;
     placeholders.push(match);
     return placeholder;
   });
   
   // Protect file extensions
-  protected = protected.replace(/\.\w{2,4}(?=\s|$|\))/g, (match) => {
+  protected = protected.replace(/\.\w{2,4}(?=\s|$|\)|,)/g, (match) => {
     const placeholder = `__PRESERVE_${placeholders.length}__`;
     placeholders.push(match);
     return placeholder;
@@ -251,28 +259,31 @@ app.post('/translate', async (req, res) => {
     const translationContext = context || detectContext(text);
     
     // Translate using Lingo.dev SDK with quality mode and context
-    // Quality mode (fast: false) + context ensures >90% accuracy
+    // Quality mode (fast: false) + context ensures >95% accuracy
     let result;
-    let retries = 2; // Retry failed translations for better reliability
+    let retries = 3; // Increased retries for better reliability
     
     while (retries >= 0) {
       try {
         result = await lingoDotDev.localizeText(protectedText, {
           sourceLocale: source,
           targetLocale,
-          fast: fast === true, // Default to quality mode (false) for maximum accuracy
+          fast: false, // ALWAYS use quality mode for maximum accuracy
           context: translationContext,
           // Preserve formatting like newlines, markdown, etc.
           preserveFormatting: true,
           // Use glossary for consistent technical terms
           glossary: technicalGlossary,
+          // Additional parameters for better accuracy
+          tone: 'professional',
+          formality: 'neutral',
         });
         break; // Success
       } catch (error) {
         retries--;
         if (retries < 0) throw error;
-        // Wait before retry (exponential backoff)
-        await new Promise(resolve => setTimeout(resolve, 100 * (3 - retries)));
+        // Wait before retry (exponential backoff: 200ms, 400ms, 800ms)
+        await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, 3 - retries - 1)));
       }
     }
 
@@ -337,17 +348,19 @@ app.post('/translate/batch', async (req, res) => {
 
         // Translate with context detection and retry logic
         const translationContext = detectContext(text);
-        let retries = 2;
+        let retries = 3; // Increased retries
         
         while (retries >= 0) {
           try {
             let result = await lingoDotDev.localizeText(protectedText, {
               sourceLocale: source,
               targetLocale,
-              fast: fast === true, // Default to quality mode for maximum accuracy
+              fast: false, // ALWAYS use quality mode for batch translations
               context: translationContext,
               preserveFormatting: true,
               glossary: technicalGlossary,
+              tone: 'professional',
+              formality: 'neutral',
             });
 
             // Restore protected parts
@@ -364,8 +377,8 @@ app.post('/translate/batch', async (req, res) => {
               errorCount++;
               return text; // Fallback to original
             }
-            // Exponential backoff
-            await new Promise(resolve => setTimeout(resolve, 100 * (3 - retries)));
+            // Exponential backoff: 200ms, 400ms, 800ms
+            await new Promise(resolve => setTimeout(resolve, 200 * Math.pow(2, 3 - retries - 1)));
           }
         }
       });

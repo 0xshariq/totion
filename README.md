@@ -82,9 +82,10 @@ Clean, distraction-free writing environment with auto-save and markdown support.
 
 ![Totion Notes Editor](totion-demo/totion-notes-editor.png)
 
-### Translation
+### Translations
 
-![Totion Translation](totion-demo/totion-translation.png)
+![Totion Spanish Translation](totion-demo/totion-spanish-translation.png)
+![Totion Russian Translation](totion-demo/totion-russian-translation.png)
 
 ### Help Menu
 
