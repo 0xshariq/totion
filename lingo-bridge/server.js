@@ -72,30 +72,39 @@ const detectContext = (text) => {
 let redis = null;
 let memoryCache = new Map();
 
-try {
-  redis = createClient({
-    url: process.env.REDIS_URL || 'redis://localhost:6379'
-  });
+// Initialize Redis connection
+const initRedis = async () => {
+  try {
+    const client = createClient({
+      url: process.env.REDIS_URL || 'redis://localhost:6379',
+      socket: {
+        connectTimeout: 2000,
+        reconnectStrategy: false // Don't retry connection
+      }
+    });
 
-  redis.on('error', (err) => {
-    console.warn('Redis not available, using memory cache:', err.message);
-    redis = null;
-  });
-  
-  redis.on('connect', () => console.log('✓ Connected to Redis for caching'));
+    // Handle errors silently
+    client.on('error', () => {
+      // Ignore errors, fallback to memory cache
+    });
 
-  // Connect to Redis with timeout
-  await Promise.race([
-    redis.connect(),
-    new Promise((_, reject) => setTimeout(() => reject(new Error('Redis timeout')), 2000))
-  ]).catch(err => {
-    console.warn('Redis connection failed, using memory cache');
+    // Connect to Redis with timeout
+    await Promise.race([
+      client.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+    ]);
+    
+    // Connection successful
+    redis = client;
+    console.log('✓ Redis connected');
+  } catch (error) {
+    // Silently fall back to memory cache
     redis = null;
-  });
-} catch (error) {
-  console.warn('Redis not available, using memory cache');
-  redis = null;
-}
+  }
+};
+
+// Try to connect to Redis
+initRedis();
 
 // Cache helper function
 const getCacheKey = (text, sourceLang, targetLang) => {

@@ -61,17 +61,24 @@ func (b *BridgeServer) Start() error {
 	// Check if node_modules exists, if not install dependencies
 	nodeModulesPath := filepath.Join(bridgePath, "node_modules")
 	if _, err := os.Stat(nodeModulesPath); os.IsNotExist(err) {
+		fmt.Println("Installing bridge server dependencies...")
 		// Try pnpm first, fallback to npm
 		installCmd := exec.Command("pnpm", "install")
 		installCmd.Dir = bridgePath
+		// Suppress install output
+		installCmd.Stdout = nil
+		installCmd.Stderr = nil
 		if err := installCmd.Run(); err != nil {
 			// Fallback to npm
 			installCmd = exec.Command("npm", "install")
 			installCmd.Dir = bridgePath
+			installCmd.Stdout = nil
+			installCmd.Stderr = nil
 			if err := installCmd.Run(); err != nil {
 				return fmt.Errorf("failed to install bridge dependencies: %w", err)
 			}
 		}
+		fmt.Println("✓ Dependencies installed")
 	}
 
 	// Start the bridge server in the background
@@ -79,16 +86,16 @@ func (b *BridgeServer) Start() error {
 	b.cmd = exec.Command("pnpm", "start")
 	b.cmd.Dir = bridgePath
 
-	// Create pipes to capture output for debugging
-	b.cmd.Stdout = os.Stdout // Show output for debugging
-	b.cmd.Stderr = os.Stderr
+	// Suppress output - redirect to null device
+	b.cmd.Stdout = nil
+	b.cmd.Stderr = nil
 
 	if err := b.cmd.Start(); err != nil {
 		// Fallback to direct node command
 		b.cmd = exec.Command("node", "server.js")
 		b.cmd.Dir = bridgePath
-		b.cmd.Stdout = os.Stdout
-		b.cmd.Stderr = os.Stderr
+		b.cmd.Stdout = nil
+		b.cmd.Stderr = nil
 
 		if err := b.cmd.Start(); err != nil {
 			return fmt.Errorf("failed to start bridge server: %w", err)
