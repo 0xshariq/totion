@@ -570,13 +570,16 @@ func (m *Model) renderLanguageSelector() string {
 	subtitle := styles.InfoStyle.Render("Change the interface language to:")
 	info := styles.SubtleStyle.Render("(Note: This translates menus and buttons, NOT your note content)")
 
-	sb.WriteString(title + "\n")
-	sb.WriteString(subtitle + "\n")
-	sb.WriteString(info + "\n\n")
+	sb.WriteString(title)
+	sb.WriteString("\n")
+	sb.WriteString(subtitle)
+	sb.WriteString("\n")
+	sb.WriteString(info)
+	sb.WriteString("\n\n")
 
 	languages := getAvailableLanguages()
 
-	// Display in 2 columns for better layout
+	// Display languages as a vertical list
 	for i := 0; i < len(languages); i++ {
 		lang := languages[i]
 		marker := "  "
@@ -587,8 +590,10 @@ func (m *Model) renderLanguageSelector() string {
 			style = styles.HighlightStyle
 		}
 
-		// Single column, left-aligned
-		sb.WriteString(style.Render(fmt.Sprintf("%s%s\n", marker, lang.Name)))
+		// Render each language on its own line
+		line := fmt.Sprintf("%s%s", marker, lang.Name)
+		sb.WriteString(style.Render(line))
+		sb.WriteString("\n")
 	}
 
 	sb.WriteString("\n")
