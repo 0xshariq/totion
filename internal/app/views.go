@@ -18,8 +18,8 @@ func (m *Model) View() string {
 	}
 
 	// Header with app name and tagline
-	title := styles.WelcomeStyle.Render("✨ TOTION ✨")
-	subtitle := styles.SubtitleStyle.Render("Your Terminal-Based Note-Taking Companion")
+	title := styles.WelcomeStyle.Render(m.translate("✨ TOTION ✨"))
+	subtitle := styles.SubtitleStyle.Render(m.translate("Your Terminal-Based Note-Taking Companion"))
 
 	header := fmt.Sprintf("%s\n%s", title, subtitle)
 
@@ -47,7 +47,7 @@ func (m *Model) View() string {
 				pinStatus = " 📌"
 			}
 			editorInfo = styles.StatusStyle.Render(
-				fmt.Sprintf("Editing: %s %s%s", m.currentNote.Format.GetIcon(), m.currentNote.Name, pinStatus),
+				fmt.Sprintf(m.translate("Editing: %s %s%s"), m.currentNote.Format.GetIcon(), m.currentNote.Name, pinStatus),
 			)
 		}
 		keysTitle = m.translate("✏️  Editor Mode")
@@ -60,55 +60,55 @@ func (m *Model) View() string {
 		}
 	case ViewNewFile:
 		keysTitle = "📝 Create New Note"
-		keys = styles.KeysStyle.Render("Enter: Proceed to Format Selection  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("Enter: Proceed to Format Selection  •  Esc: Cancel & Go Back"))
 	case ViewFormatSelector:
 		keysTitle = "🎨 Choose Format"
-		keys = styles.KeysStyle.Render("Tab: Switch Between Formats  •  Enter: Create Note  •  Esc: Cancel")
+		keys = styles.KeysStyle.Render(m.translate("Tab: Switch Between Formats  •  Enter: Create Note  •  Esc: Cancel"))
 	case ViewDeleteConfirm:
 		keysTitle = "⚠️  Confirm Action"
-		keys = styles.KeysStyle.Render("Y: Yes, Delete Permanently  •  N: No, Keep Note")
+		keys = styles.KeysStyle.Render(m.translate("Y: Yes, Delete Permanently  •  N: No, Keep Note"))
 	case ViewHelp:
 		keysTitle = "❓ Help & Documentation"
-		keys = styles.KeysStyle.Render("Press Number: Select Topic  •  Esc: Back to Previous Menu")
+		keys = styles.KeysStyle.Render(m.translate("Press Number: Select Topic  •  Esc: Back to Previous Menu"))
 	case ViewTemplates:
 		keysTitle = "📝 Templates"
-		keys = styles.KeysStyle.Render("1-7: Select Template Type  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("1-7: Select Template Type  •  Esc: Cancel & Go Back"))
 	case ViewThemes:
 		keysTitle = "🎨 Themes"
-		keys = styles.KeysStyle.Render("1-6: Choose Theme  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("1-6: Choose Theme  •  Esc: Cancel & Go Back"))
 	case ViewExport:
 		keysTitle = "📤 Export Notes"
-		keys = styles.KeysStyle.Render("1: HTML  •  2: PDF  •  3: Markdown  •  Esc: Cancel")
+		keys = styles.KeysStyle.Render(m.translate("1: HTML  •  2: PDF  •  3: Markdown  •  Esc: Cancel"))
 	case ViewImport:
 		keysTitle = "📥 Import Notes"
-		keys = styles.KeysStyle.Render("1: Notion  •  2: Markdown  •  3: Text Files  •  Esc: Cancel")
+		keys = styles.KeysStyle.Render(m.translate("1: Notion  •  2: Markdown  •  3: Text Files  •  Esc: Cancel"))
 	case ViewLinking:
 		keysTitle = "🔗 Wiki Links"
-		keys = styles.KeysStyle.Render("Use [[Note Name]] syntax in editor to create links  •  Esc: Back")
+		keys = styles.KeysStyle.Render(m.translate("Use [[Note Name]] syntax in editor to create links  •  Esc: Back"))
 	case ViewStats:
 		keysTitle = "📊 Statistics Dashboard"
-		keys = styles.KeysStyle.Render("View your note-taking analytics  •  Esc: Back to Home")
+		keys = styles.KeysStyle.Render(m.translate("View your note-taking analytics  •  Esc: Back to Home"))
 	case ViewGit:
 		keysTitle = "🔄 Git Version Control"
-		keys = styles.KeysStyle.Render("1-4: Select Git Action  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("1-4: Select Git Action  •  Esc: Cancel & Go Back"))
 	case ViewSync:
 		keysTitle = "☁️  Sync & Backup"
-		keys = styles.KeysStyle.Render("1-4: Select Sync Option  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("1-4: Select Sync Option  •  Esc: Cancel & Go Back"))
 	case ViewNotebooks:
 		keysTitle = "📂 Notebooks Manager"
-		keys = styles.KeysStyle.Render("1-6: Select Notebook Action  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("1-6: Select Notebook Action  •  Esc: Cancel & Go Back"))
 	case ViewNotebookNameInput:
 		keysTitle = "📁 Create Notebook"
-		keys = styles.KeysStyle.Render("Enter: Create Notebook  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("Enter: Create Notebook  •  Esc: Cancel & Go Back"))
 	case ViewSelectNotebookForNote:
 		keysTitle = "📂 Select Notebook"
-		keys = styles.KeysStyle.Render("1-9: Choose Destination Notebook  •  Esc: Cancel")
+		keys = styles.KeysStyle.Render(m.translate("1-9: Choose Destination Notebook  •  Esc: Cancel"))
 	case ViewNoteNameInNotebook:
 		keysTitle = "📝 Create Note in Notebook"
-		keys = styles.KeysStyle.Render("Enter: Create Note  •  Esc: Cancel & Go Back")
+		keys = styles.KeysStyle.Render(m.translate("Enter: Create Note  •  Esc: Cancel & Go Back"))
 	case ViewLanguageSelector:
 		keysTitle = "🌐 UI Language Selection"
-		keys = styles.KeysStyle.Render("↑↓: Navigate Languages  •  Enter: Change UI Language  •  Esc: Cancel")
+		keys = styles.KeysStyle.Render(m.translate("↑↓: Navigate Languages  •  Enter: Change UI Language  •  Esc: Cancel"))
 	}
 
 	var view string
@@ -182,17 +182,17 @@ func (m *Model) View() string {
 	case ViewEditor:
 		view = m.editor.View()
 	case ViewNewFile:
-		prompt := styles.SuccessStyle.Render("Enter note name:")
+		prompt := styles.SuccessStyle.Render(m.translate("Enter note name:"))
 		view = fmt.Sprintf("%s\n\n%s", prompt, m.fileNameInput.View())
 	case ViewNotebookNameInput:
-		prompt := styles.SuccessStyle.Render("📁 Create New Notebook")
-		hint := styles.InfoStyle.Render("Enter a name for your notebook (e.g., Work, Personal, Projects)")
+		prompt := styles.SuccessStyle.Render(m.translate("📁 Create New Notebook"))
+		hint := styles.InfoStyle.Render(m.translate("Enter a name for your notebook (e.g., Work, Personal, Projects)"))
 		view = fmt.Sprintf("%s\n%s\n\n%s", prompt, hint, m.notebookNameInput.View())
 	case ViewSelectNotebookForNote:
 		view = m.renderNotebookSelection()
 	case ViewNoteNameInNotebook:
-		prompt := styles.SuccessStyle.Render(fmt.Sprintf("📝 Create Note in: %s", m.selectedNotebook))
-		hint := styles.InfoStyle.Render("Enter the name for your note")
+		prompt := styles.SuccessStyle.Render(fmt.Sprintf(m.translate("📝 Create Note in: %s"), m.selectedNotebook))
+		hint := styles.InfoStyle.Render(m.translate("Enter the name for your note"))
 		view = fmt.Sprintf("%s\n%s\n\n%s", prompt, hint, m.fileNameInput.View())
 	case ViewFormatSelector:
 		mdStyle := styles.StatusStyle
@@ -215,8 +215,8 @@ func (m *Model) View() string {
 	case ViewDeleteConfirm:
 		item, ok := m.list.SelectedItem().(models.Note)
 		if ok {
-			warning := styles.ErrorStyle.Render(fmt.Sprintf("⚠️  Delete %s?", item.Name))
-			notice := styles.StatusStyle.Render("This action cannot be undone!")
+			warning := styles.ErrorStyle.Render(fmt.Sprintf(m.translate("⚠️  Delete %s?"), item.Name))
+			notice := styles.StatusStyle.Render(m.translate("This action cannot be undone!"))
 			view = fmt.Sprintf("%s\n%s", warning, notice)
 		}
 	case ViewHelp:
@@ -286,8 +286,8 @@ func (m *Model) View() string {
 			"7. 📄 Blank Note         → Start from scratch",
 		}
 
-		templateTitle := styles.TitleStyle.Render("📝 AVAILABLE TEMPLATES")
-		templateDesc := styles.InfoStyle.Render("\nSelect a template to create a new note:\n")
+		templateTitle := styles.TitleStyle.Render(m.translate("📝 AVAILABLE TEMPLATES"))
+		templateDesc := styles.InfoStyle.Render(m.translate("\nSelect a template to create a new note:\n"))
 
 		var templateList string
 		for i, tmpl := range templates {
@@ -302,7 +302,7 @@ func (m *Model) View() string {
 		content := fmt.Sprintf("%s%s\n%s", templateTitle, templateDesc, templateList)
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 	case ViewThemes:
 		themes := []string{
 			"1. 🔵 Default (Blue)     → Blue gradient, fresh and modern",
@@ -313,8 +313,8 @@ func (m *Model) View() string {
 			"6. ❄️  Nord               → Cool, bluish theme",
 		}
 
-		themeTitle := styles.TitleStyle.Render("🎨 AVAILABLE THEMES")
-		themeDesc := styles.InfoStyle.Render("\nSelect a theme for Totion:\n")
+		themeTitle := styles.TitleStyle.Render(m.translate("🎨 AVAILABLE THEMES"))
+		themeDesc := styles.InfoStyle.Render(m.translate("\nSelect a theme for Totion:\n"))
 
 		var themeList string
 		for i, theme := range themes {
@@ -326,15 +326,15 @@ func (m *Model) View() string {
 			themeList += style.Render(theme) + "\n"
 		}
 
-		themeNote := styles.SubtleStyle.Render("\nNote: Theme selection is implemented in internal/themes")
+		themeNote := styles.SubtleStyle.Render(m.translate("\nNote: Theme selection is implemented in internal/themes"))
 
 		content := fmt.Sprintf("%s%s\n%s%s", themeTitle, themeDesc, themeList, themeNote)
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 	case ViewExport:
-		exportTitle := styles.TitleStyle.Render("📤 EXPORT OPTIONS")
-		exportDesc := styles.InfoStyle.Render("\nExport your notes to different formats:\n")
+		exportTitle := styles.TitleStyle.Render(m.translate("📤 EXPORT OPTIONS"))
+		exportDesc := styles.InfoStyle.Render(m.translate("\nExport your notes to different formats:\n"))
 
 		exportOptions := []string{
 			"1. 📄 Export to HTML      → Beautiful web page format",
@@ -352,17 +352,17 @@ func (m *Model) View() string {
 			exportList += style.Render(opt) + "\n"
 		}
 
-		exportNote := styles.SubtleStyle.Render("\nPress 1-4 to select export format for current note")
-		exportExample := styles.InfoStyle.Render("\nFiles are exported to /tmp/ directory")
+		exportNote := styles.SubtleStyle.Render(m.translate("\nPress 1-4 to select export format for current note"))
+		exportExample := styles.InfoStyle.Render(m.translate("\nFiles are exported to /tmp/ directory"))
 
 		content := fmt.Sprintf("%s%s\n%s%s%s", exportTitle, exportDesc, exportList, exportNote, exportExample)
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 
 	case ViewImport:
-		importTitle := styles.TitleStyle.Render("📥 IMPORT OPTIONS")
-		importDesc := styles.InfoStyle.Render("\nImport notes from other applications:\n")
+		importTitle := styles.TitleStyle.Render(m.translate("📥 IMPORT OPTIONS"))
+		importDesc := styles.InfoStyle.Render(m.translate("\nImport notes from other applications:\n"))
 
 		importOptions := []string{
 			"1. 📦 Import from Notion     → Import Notion JSON exports",
@@ -379,17 +379,17 @@ func (m *Model) View() string {
 			importList += style.Render(opt) + "\n"
 		}
 
-		importNote := styles.SubtleStyle.Render("\nPress 1-3 to select import source")
-		importExample := styles.InfoStyle.Render("\nExample: Select source folder/file to import")
+		importNote := styles.SubtleStyle.Render(m.translate("\nPress 1-3 to select import source"))
+		importExample := styles.InfoStyle.Render(m.translate("\nExample: Select source folder/file to import"))
 
 		content := fmt.Sprintf("%s%s\n%s%s%s", importTitle, importDesc, importList, importNote, importExample)
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 
 	case ViewLinking:
-		linkingTitle := styles.TitleStyle.Render("🔗 NOTE LINKING")
-		linkingDesc := styles.InfoStyle.Render("\nCreate connections between your notes:\n")
+		linkingTitle := styles.TitleStyle.Render(m.translate("🔗 NOTE LINKING"))
+		linkingDesc := styles.InfoStyle.Render(m.translate("\nCreate connections between your notes:\n"))
 
 		linkingInfo := styles.MenuItemStyle.Render(`
   Wiki-Style Links:
@@ -409,8 +409,8 @@ func (m *Model) View() string {
     • Press Ctrl+K to see linking help
 `)
 
-		linkingExample := styles.HighlightStyle.Render("\nExample:")
-		linkingCode := styles.CodeStyle.Render("  See [[Project Ideas]] for brainstorming\n  Check [[Meeting Notes|yesterday's meeting]]")
+		linkingExample := styles.HighlightStyle.Render(m.translate("\nExample:"))
+		linkingCode := styles.CodeStyle.Render(m.translate("  See [[Project Ideas]] for brainstorming\n  Check [[Meeting Notes|yesterday's meeting]]"))
 
 		view = fmt.Sprintf("%s%s%s%s\n%s", linkingTitle, linkingDesc, linkingInfo, linkingExample, linkingCode)
 
@@ -418,25 +418,25 @@ func (m *Model) View() string {
 		content := m.handleStatsView()
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 
 	case ViewGit:
 		content := m.handleGitView()
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 
 	case ViewSync:
 		content := m.handleSyncView()
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 
 	case ViewNotebooks:
 		content := m.handleNotebooksView()
 		m.contentViewport.SetContent(content)
 		view = m.contentViewport.View() + "\n" +
-			styles.ScrollHintStyle.Render("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible")
+			styles.ScrollHintStyle.Render(m.translate("📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible"))
 
 	case ViewLanguageSelector:
 		view = m.renderLanguageSelector()
@@ -465,11 +465,11 @@ func (m *Model) renderNotebookSelection() string {
 
 	notebooks, err := nbManager.ListNotebooks()
 	if err != nil || len(notebooks) == 0 {
-		return styles.ErrorStyle.Render("No notebooks found. Create one first!")
+		return styles.ErrorStyle.Render(m.translate("No notebooks found. Create one first!"))
 	}
 
-	title := styles.TitleStyle.Render("📂 SELECT NOTEBOOK")
-	hint := styles.InfoStyle.Render("\nSelect a notebook to create your note in:\n")
+	title := styles.TitleStyle.Render(m.translate("📂 SELECT NOTEBOOK"))
+	hint := styles.InfoStyle.Render(m.translate("\nSelect a notebook to create your note in:\n"))
 
 	var notebookList string
 	for i, nb := range notebooks {
@@ -495,7 +495,7 @@ func (m *Model) renderPinnedNotes() string {
 
 	var sb strings.Builder
 	sb.WriteString("\n")
-	sb.WriteString(styles.TitleStyle.Render("📌 Pinned Notes:") + "\n")
+	sb.WriteString(styles.TitleStyle.Render(m.translate("📌 Pinned Notes:")) + "\n")
 
 	for i, p := range pinned {
 		if i >= 5 {
@@ -519,7 +519,7 @@ func (m *Model) renderFocusMode() string {
 
 	// Minimal header
 	sb.WriteString("\n")
-	sb.WriteString(styles.SubtleStyle.Render("Focus Mode") + "\n")
+	sb.WriteString(styles.SubtleStyle.Render(m.translate("Focus Mode")) + "\n")
 	if m.currentNote != nil {
 		sb.WriteString(styles.SubtleStyle.Render(m.currentNote.Name) + "\n")
 	}
@@ -531,7 +531,7 @@ func (m *Model) renderFocusMode() string {
 
 	// Footer with stats
 	stats := styles.SubtleStyle.Render(fmt.Sprintf(
-		"Words: %d  •  Characters: %d  •  Ctrl+F: Exit Focus  •  Ctrl+S: Save",
+		m.translate("Words: %d  •  Characters: %d  •  Ctrl+F: Exit Focus  •  Ctrl+S: Save"),
 		wordCount, charCount,
 	))
 	sb.WriteString(stats)
@@ -566,9 +566,9 @@ func countWords(text string) int {
 func (m *Model) renderLanguageSelector() string {
 	var sb strings.Builder
 
-	title := styles.TitleStyle.Render("🌐 SELECT UI LANGUAGE")
-	subtitle := styles.InfoStyle.Render("Change the interface language to:")
-	info := styles.SubtleStyle.Render("(Note: This translates menus and buttons, NOT your note content)")
+	title := styles.TitleStyle.Render(m.translate("🌐 SELECT UI LANGUAGE"))
+	subtitle := styles.InfoStyle.Render(m.translate("Change the interface language to:"))
+	info := styles.SubtleStyle.Render(m.translate("(Note: This translates menus and buttons, NOT your note content)"))
 
 	sb.WriteString(title)
 	sb.WriteString("\n")
@@ -590,14 +590,34 @@ func (m *Model) renderLanguageSelector() string {
 			style = styles.HighlightStyle
 		}
 
+		// Show current language
+		currentIndicator := ""
+		if lang.Code == m.currentUILanguage {
+			currentIndicator = " ✓"
+		}
+
 		// Render each language on its own line
-		line := fmt.Sprintf("%s%s", marker, lang.Name)
+		line := fmt.Sprintf("%s%s%s", marker, lang.Name, currentIndicator)
 		sb.WriteString(style.Render(line))
 		sb.WriteString("\n")
 	}
 
+	// Show translation cache statistics if not English
+	if m.currentUILanguage != "en" {
+		m.cacheMutex.RLock()
+		cacheSize := len(m.translationCache)
+		m.cacheMutex.RUnlock()
+
+		if cacheSize > 0 {
+			sb.WriteString("\n")
+			cacheInfo := fmt.Sprintf(m.translate("📊 Translation cache: %d strings translated"), cacheSize)
+			sb.WriteString(styles.SubtleStyle.Render(cacheInfo))
+			sb.WriteString("\n")
+		}
+	}
+
 	sb.WriteString("\n")
-	sb.WriteString(styles.SubtleStyle.Render("💡 Use ↑↓ to navigate, Enter to change language, Esc to cancel"))
+	sb.WriteString(styles.SubtleStyle.Render(m.translate("💡 Use ↑↓ to navigate, Enter to change language, Esc to cancel")))
 
 	return sb.String()
 }

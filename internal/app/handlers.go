@@ -63,7 +63,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 	case "ctrl+d":
 		if m.state == ViewList {
 			m.state = ViewDeleteConfirm
-			m.statusMessage = "Press 'y' to confirm delete, 'n' to cancel"
+			m.statusMessage = m.translate("Press 'y' to confirm delete, 'n' to cancel")
 			return true, m, nil
 		}
 
@@ -124,28 +124,28 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 		if m.state == ViewHome {
 			notePath, err := m.dailyManager.CreateTodayNote()
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render("Error creating daily note: " + err.Error())
+				m.statusMessage = styles.ErrorStyle.Render(m.translate("Error creating daily note: ") + err.Error())
 				return true, m, nil
 			}
 
 			// Read the note content
 			content, err := m.storage.ReadNote(notePath)
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render("Error reading daily note: " + err.Error())
+				m.statusMessage = styles.ErrorStyle.Render(m.translate("Error reading daily note: ") + err.Error())
 				return true, m, nil
 			}
 
 			// Open the note file
 			file, err := m.storage.OpenNote(notePath)
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render("Error opening daily note: " + err.Error())
+				m.statusMessage = styles.ErrorStyle.Render(m.translate("Error opening daily note: ") + err.Error())
 				return true, m, nil
 			}
 
 			// Create note model
 			noteInfo, err := os.Stat(notePath)
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render("Error reading note info: " + err.Error())
+				m.statusMessage = styles.ErrorStyle.Render(m.translate("Error reading note info: ") + err.Error())
 				return true, m, nil
 			}
 
@@ -193,7 +193,7 @@ func (m *Model) handleKeyPress(msg tea.KeyMsg) (bool, tea.Model, tea.Cmd) {
 			// Toggle pin for current note
 			isPinned, err := m.pinnedManager.Toggle(m.currentNote.Path, m.currentNote.Name)
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render("Error toggling pin: " + err.Error())
+				m.statusMessage = styles.ErrorStyle.Render(m.translate("Error toggling pin: ") + err.Error())
 			} else {
 				if isPinned {
 					m.statusMessage = styles.SuccessStyle.Render(m.translate("📌 Note pinned!"))
@@ -424,7 +424,7 @@ func (m *Model) handleEnter() (tea.Model, tea.Cmd) {
 func (m *Model) showList() (tea.Model, tea.Cmd) {
 	notes, err := m.storage.ListNotes()
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error: ") + err.Error())
 		return m, nil
 	}
 
@@ -443,7 +443,7 @@ func (m *Model) createNewNote() (tea.Model, tea.Cmd) {
 
 	file, path, err := m.storage.CreateNote(filename, m.selectedFormat)
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error: ") + err.Error())
 		m.state = ViewHome
 		return m, nil
 	}
@@ -469,7 +469,7 @@ func (m *Model) createNewNote() (tea.Model, tea.Cmd) {
 	m.state = ViewEditor
 	m.editor.SetValue(templateContent)
 	m.editor.Focus()
-	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("Created %s %s", m.selectedFormat.GetIcon(), filename))
+	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("Created %s %s"), m.selectedFormat.GetIcon(), filename))
 
 	return m, nil
 }
@@ -487,13 +487,13 @@ func (m *Model) openSelectedNote() (tea.Model, tea.Cmd) {
 
 	content, err := m.storage.ReadNote(item.Path)
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error: ") + err.Error())
 		return m, nil
 	}
 
 	file, err := m.storage.OpenNote(item.Path)
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error: ") + err.Error())
 		return m, nil
 	}
 
@@ -517,10 +517,10 @@ func (m *Model) openSelectedNote() (tea.Model, tea.Cmd) {
 	linker := linking.NewLinkManager()
 	links := linker.ParseLinks(content, item.Name)
 	if len(links) > 0 {
-		linkInfo := fmt.Sprintf("Found %d wiki-style links. Press Alt+L for link help.", len(links))
+		linkInfo := m.translate(fmt.Sprintf("Found %d wiki-style links. Press Alt+L for link help.", len(links)))
 		m.statusMessage = styles.InfoStyle.Render(linkInfo)
 	} else {
-		m.statusMessage = styles.StatusStyle.Render(fmt.Sprintf("Editing %s %s", item.Format.GetIcon(), item.Name))
+		m.statusMessage = styles.StatusStyle.Render(fmt.Sprintf(m.translate("Editing %s %s"), item.Format.GetIcon(), item.Name))
 	}
 
 	return m, nil
@@ -534,7 +534,7 @@ func (m *Model) saveCurrentNote() (tea.Model, tea.Cmd) {
 
 	err := m.storage.SaveNote(m.currentFile, m.editor.Value())
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error: ") + err.Error())
 		return m, nil
 	}
 
@@ -568,12 +568,12 @@ func (m *Model) deleteSelectedNote() (tea.Model, tea.Cmd) {
 
 	err := m.storage.DeleteNote(item.Path)
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error: " + err.Error()))
 		m.state = ViewList
 		return m, nil
 	}
 
-	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Deleted %s", item.Name))
+	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Deleted %s"), item.Name))
 	m.state = ViewHome
 
 	return m, nil
@@ -582,13 +582,13 @@ func (m *Model) deleteSelectedNote() (tea.Model, tea.Cmd) {
 // selectTemplate selects and applies a template
 func (m *Model) selectTemplate(key string) (tea.Model, tea.Cmd) {
 	templateNames := []string{
-		"Meeting Notes",
-		"Todo List",
-		"Journal Entry",
-		"Project Plan",
-		"Code Snippet",
-		"Book Notes",
-		"Blank",
+		m.translate("Meeting Notes"),
+		m.translate("Todo List"),
+		m.translate("Journal Entry"),
+		m.translate("Project Plan"),
+		m.translate("Code Snippet"),
+		m.translate("Book Notes"),
+		m.translate("Blank"),
 	}
 
 	index := 0
@@ -619,7 +619,7 @@ func (m *Model) selectTemplate(key string) (tea.Model, tea.Cmd) {
 	m.selectedFormat = models.FormatMarkdown
 	m.fileNameInput.SetValue("")
 	m.fileNameInput.Focus()
-	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("Selected: %s template", templateNames[index]))
+	m.statusMessage = styles.SuccessStyle.Render(m.translate(fmt.Sprintf("Selected: %s template", templateNames[index])))
 
 	return m, nil
 }
@@ -654,7 +654,7 @@ func (m *Model) selectTheme(key string) {
 	}
 
 	m.state = ViewHome
-	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Theme changed to: %s", themeNames[index]))
+	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Theme changed to: %s"), themeNames[index]))
 }
 
 // handleExport handles export operations
@@ -690,9 +690,9 @@ func (m *Model) handleExport(key string) {
 	}
 
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Export failed: %v", err))
+		m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Export failed: %v"), err))
 	} else {
-		m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Exported to %s format at %s", format, outputPath))
+		m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Exported to %s format at %s"), format, outputPath))
 	}
 	m.state = ViewHome
 }
@@ -710,32 +710,32 @@ func (m *Model) handleImport(key string) {
 		notionPath := filepath.Join(os.Getenv("HOME"), "notion_export.json")
 		if _, err := os.Stat(notionPath); os.IsNotExist(err) {
 			message = fmt.Sprintf("Place notion_export.json in %s and try again", os.Getenv("HOME"))
-			m.statusMessage = styles.WarningStyle.Render("⚠️  " + message)
+			m.statusMessage = styles.WarningStyle.Render(m.translate("⚠️  ") + message)
 		} else {
 			imported, err := importer.ImportFromNotion(notionPath)
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Import failed: %v", err))
+				m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Import failed: %v"), err))
 			} else {
-				m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Imported %d notes from Notion", len(imported)))
+				m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Imported %d notes from Notion"), len(imported)))
 			}
 		}
 	case "2": // Obsidian
 		obsidianPath := filepath.Join(os.Getenv("HOME"), "obsidian_vault")
 		if _, err := os.Stat(obsidianPath); os.IsNotExist(err) {
 			message = fmt.Sprintf("Place obsidian_vault/ folder in %s and try again", os.Getenv("HOME"))
-			m.statusMessage = styles.WarningStyle.Render("⚠️  " + message)
+			m.statusMessage = styles.WarningStyle.Render(m.translate("⚠️  ") + message)
 		} else {
 			imported, err := importer.ImportFromObsidian(obsidianPath)
 			if err != nil {
-				m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Import failed: %v", err))
+				m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Import failed: %v"), err))
 			} else {
-				m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Imported %d notes from Obsidian", len(imported)))
+				m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Imported %d notes from Obsidian"), len(imported)))
 			}
 		}
 	case "3": // Plain Text
 		// For plain text, show instructions
 		message = "Place .md or .txt files in ~/.totion/ manually, or use git clone to import from repositories"
-		m.statusMessage = styles.InfoStyle.Render("💡 " + message)
+		m.statusMessage = styles.InfoStyle.Render(m.translate("💡 ") + message)
 	default:
 		return
 	}
@@ -757,24 +757,24 @@ func (m *Model) handleGitAction(key string) {
 	case "1": // Initialize
 		err := gitManager.Initialize()
 		if err != nil {
-			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Git init failed: %v", err))
+			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Git init failed: %v"), err))
 		} else {
 			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Git repository initialized"))
 		}
 	case "2": // Commit
 		err := gitManager.Commit("Auto-commit from Totion")
 		if err != nil {
-			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Commit failed: %v", err))
+			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Commit failed: %v"), err))
 		} else {
 			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Changes committed"))
 		}
 	case "3": // History
 		history, _ := gitManager.GetHistory(5)
-		m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf("Last 5 commits:\n%s", history))
+		m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf(m.translate("Last 5 commits:\n%s"), history))
 		return
 	case "4": // Status
 		status, _ := gitManager.GetStatus()
-		m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf("Git status:\n%s", status))
+		m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf(m.translate("Git status:\n%s"), status))
 		return
 	default:
 		return
@@ -793,23 +793,23 @@ func (m *Model) handleSyncAction(key string) {
 		backupPath := filepath.Join(os.TempDir(), "totion_backup")
 		err := syncer.BackupVault(backupPath)
 		if err != nil {
-			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Backup failed: %v", err))
+			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Backup failed: %v"), err))
 		} else {
-			m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Backup created: %s", backupPath))
+			m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Backup created: %s"), backupPath))
 		}
 	case "2": // Restore
 		backupPath := filepath.Join(os.TempDir(), "totion_backup")
 		err := syncer.RestoreVault(backupPath)
 		if err != nil {
-			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf("Restore failed: %v", err))
+			m.statusMessage = styles.ErrorStyle.Render(fmt.Sprintf(m.translate("Restore failed: %v"), err))
 		} else {
 			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Vault restored from backup"))
 		}
 	case "3": // Sync to cloud
-		m.statusMessage = styles.InfoStyle.Render("Cloud sync requires configuration. See README for setup.")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Cloud sync requires configuration. See README for setup."))
 		return
 	case "4": // Sync from cloud
-		m.statusMessage = styles.InfoStyle.Render("Cloud sync requires configuration. See README for setup.")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Cloud sync requires configuration. See README for setup."))
 		return
 	default:
 		return
@@ -870,45 +870,59 @@ func (m *Model) handleGitView() string {
 	vaultDir := m.getVaultDir()
 	gitManager := git.NewGitManager(vaultDir)
 
-	gitTitle := styles.TitleStyle.Render("🔄 GIT VERSION CONTROL")
+	gitTitle := styles.TitleStyle.Render(m.translate("🔄 GIT VERSION CONTROL"))
 
 	// Check if git is initialized
 	status, _ := gitManager.GetStatus()
 
 	gitInfo := fmt.Sprintf(`
-Git Repository: %s
+%s: %s
 
-Options:
-  1. Initialize Git Repository
-  2. Commit All Changes
-  3. View Commit History
-  4. View Status
+%s:
+  1. %s
+  2. %s
+  3. %s
+  4. %s
 
-Status:
+%s:
 %s
 
-`, vaultDir, status)
+`,
+		m.translate("Git Repository"), vaultDir,
+		m.translate("Options"),
+		m.translate("Initialize Git Repository"),
+		m.translate("Commit All Changes"),
+		m.translate("View Commit History"),
+		m.translate("View Status"),
+		m.translate("Status"), status)
 
 	return gitTitle + "\n" + styles.MenuItemStyle.Render(gitInfo)
 }
 
 // handleSyncView shows sync/backup options
 func (m *Model) handleSyncView() string {
-	syncTitle := styles.TitleStyle.Render("☁️  SYNC & BACKUP")
+	syncTitle := styles.TitleStyle.Render(m.translate("☁️  SYNC & BACKUP"))
 
-	syncInfo := styles.MenuItemStyle.Render(`
-Sync Options:
-  1. Backup Vault to ZIP
-  2. Restore from Backup
-  3. Sync to Cloud (if configured)
-  4. Sync from Cloud
+	syncInfo := fmt.Sprintf(`
+%s:
+  1. %s
+  2. %s
+  3. %s
+  4. %s
 
-Current vault location: ~/.totion/
+%s: ~/.totion/
 
-Press 1-4 to select an option
-`)
+%s
+`,
+		m.translate("Sync Options"),
+		m.translate("Backup Vault to ZIP"),
+		m.translate("Restore from Backup"),
+		m.translate("Sync to Cloud (if configured)"),
+		m.translate("Sync from Cloud"),
+		m.translate("Current vault location"),
+		m.translate("Press 1-4 to select an option"))
 
-	return syncTitle + "\n" + syncInfo
+	return syncTitle + "\n" + styles.MenuItemStyle.Render(syncInfo)
 }
 
 // handleNotebooksView shows notebook management
@@ -916,34 +930,44 @@ func (m *Model) handleNotebooksView() string {
 	vaultDir := m.getVaultDir()
 	nbManager := notebook.NewNotebookManager(vaultDir)
 
-	notebooksTitle := styles.TitleStyle.Render("📂 NOTEBOOKS & FOLDERS")
+	notebooksTitle := styles.TitleStyle.Render(m.translate("📂 NOTEBOOKS & FOLDERS"))
 
-	notebooksInfo := styles.MenuItemStyle.Render(`
-Notebook Management:
-  1. Create New Notebook
-  2. List All Notebooks
-  3. Move Note to Notebook
-  4. Rename Notebook
-  5. Delete Notebook
-  6. Create Note in Notebook
+	notebooksInfo := fmt.Sprintf(`
+%s:
+  1. %s
+  2. %s
+  3. %s
+  4. %s
+  5. %s
+  6. %s
 
-Notebooks help organize your notes into folders.
-Each notebook is a folder in ~/.totion/
+%s
+%s
 
-Press 1-6 to select an option
-`)
+%s
+`,
+		m.translate("Notebook Management"),
+		m.translate("Create New Notebook"),
+		m.translate("List All Notebooks"),
+		m.translate("Move Note to Notebook"),
+		m.translate("Rename Notebook"),
+		m.translate("Delete Notebook"),
+		m.translate("Create Note in Notebook"),
+		m.translate("Notebooks help organize your notes into folders."),
+		m.translate("Each notebook is a folder in ~/.totion/"),
+		m.translate("Press 1-6 to select an option"))
 
 	// List existing notebooks (directories)
 	notebooks, _ := nbManager.ListNotebooks()
 	notebookList := ""
 	if len(notebooks) > 0 {
-		notebookList = styles.HighlightStyle.Render("\nExisting Notebooks:\n")
+		notebookList = styles.HighlightStyle.Render(m.translate("\nExisting Notebooks:\n"))
 		for _, nb := range notebooks {
 			notebookList += styles.InfoStyle.Render(fmt.Sprintf("  📁 %s\n", nb.Name))
 		}
 	}
 
-	return notebooksTitle + "\n" + notebooksInfo + notebookList
+	return notebooksTitle + "\n" + styles.MenuItemStyle.Render(notebooksInfo) + notebookList
 }
 
 // handleNotebookAction performs notebook actions
@@ -958,37 +982,37 @@ func (m *Model) handleNotebookAction(key string) {
 		m.notebookNameInput.Placeholder = "Enter notebook name..."
 		m.notebookNameInput.Focus()
 		m.state = ViewNotebookNameInput
-		m.statusMessage = styles.InfoStyle.Render("Enter notebook name and press Enter")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Enter notebook name and press Enter"))
 	case "2": // List All Notebooks
 		notebooks, err := nbManager.ListNotebooks()
 		if err != nil || len(notebooks) == 0 {
-			m.statusMessage = styles.InfoStyle.Render("No notebooks found. Create one with option 1.")
+			m.statusMessage = styles.InfoStyle.Render(m.translate("No notebooks found. Create one with option 1."))
 		} else {
 			notebookNames := ""
 			for _, nb := range notebooks {
 				notebookNames += fmt.Sprintf("  📁 %s (%d notes)\n", nb.Name, nb.NoteCount)
 			}
-			m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf("Notebooks:\n%s", notebookNames))
+			m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf(m.translate("Notebooks:\n%s"), notebookNames))
 		}
 		m.state = ViewHome
 	case "3": // Move Note to Notebook
-		m.statusMessage = styles.InfoStyle.Render("Feature coming soon: Select note and destination notebook")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Feature coming soon: Select note and destination notebook"))
 		m.state = ViewHome
 	case "4": // Rename Notebook
-		m.statusMessage = styles.InfoStyle.Render("Feature coming soon: Select notebook to rename")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Feature coming soon: Select notebook to rename"))
 		m.state = ViewHome
 	case "5": // Delete Notebook
-		m.statusMessage = styles.InfoStyle.Render("Feature coming soon: Select notebook to delete")
+		m.statusMessage = styles.InfoStyle.Render(m.translate("Feature coming soon: Select notebook to delete"))
 		m.state = ViewHome
 	case "6": // Create Note in Notebook
 		// Show list of notebooks to select from
 		notebooks, err := nbManager.ListNotebooks()
 		if err != nil || len(notebooks) == 0 {
-			m.statusMessage = styles.ErrorStyle.Render("No notebooks found. Create one first with option 1.")
+			m.statusMessage = styles.ErrorStyle.Render(m.translate("No notebooks found. Create one first with option 1."))
 			m.state = ViewHome
 		} else {
 			m.state = ViewSelectNotebookForNote
-			m.statusMessage = styles.InfoStyle.Render("Select a notebook (type the number):")
+			m.statusMessage = styles.InfoStyle.Render(m.translate("Select a notebook (type the number):"))
 		}
 	default:
 		return
@@ -1009,12 +1033,12 @@ func (m *Model) createNotebook() (tea.Model, tea.Cmd) {
 
 	err := nbManager.CreateNotebook(notebookName)
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error creating notebook: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error creating notebook: ") + err.Error())
 		m.state = ViewHome
 		return m, nil
 	}
 
-	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("✓ Created notebook: %s", notebookName))
+	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("✓ Created notebook: %s"), notebookName))
 	m.state = ViewHome
 	m.notebookNameInput.SetValue("")
 
@@ -1061,7 +1085,7 @@ func (m *Model) selectNotebookForNote(key string) {
 		m.state = ViewNoteNameInNotebook
 		m.fileNameInput.SetValue("")
 		m.fileNameInput.Focus()
-		m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf("Creating note in: %s", m.selectedNotebook))
+		m.statusMessage = styles.InfoStyle.Render(fmt.Sprintf(m.translate("Creating note in: %s"), m.selectedNotebook))
 	}
 }
 
@@ -1095,7 +1119,7 @@ func (m *Model) createNoteInNotebook() (tea.Model, tea.Cmd) {
 
 	file, err := os.Create(notePath)
 	if err != nil {
-		m.statusMessage = styles.ErrorStyle.Render("Error creating note: " + err.Error())
+		m.statusMessage = styles.ErrorStyle.Render(m.translate("Error creating note: ") + err.Error())
 		m.state = ViewHome
 		return m, nil
 	}
@@ -1120,7 +1144,7 @@ func (m *Model) createNoteInNotebook() (tea.Model, tea.Cmd) {
 	m.state = ViewEditor
 	m.editor.SetValue(templateContent)
 	m.editor.Focus()
-	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf("Created %s in %s", filename+ext, m.selectedNotebook))
+	m.statusMessage = styles.SuccessStyle.Render(fmt.Sprintf(m.translate("Created %s in %s"), filename+ext, m.selectedNotebook))
 
 	// Reset selected notebook
 	m.selectedNotebook = ""
@@ -1167,7 +1191,7 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 	m.translationCache = make(map[string]string)
 	m.clearViewCache()
 
-	// Pre-warm cache with common strings for smooth rendering (40+ strings)
+	// Pre-warm cache with common strings for smooth rendering (100+ strings)
 	commonStrings := []string{
 		// Main actions
 		"Create New Note", "View All Notes", "Help", "Quit",
@@ -1191,21 +1215,68 @@ func (m *Model) translateNote() (bool, tea.Model, tea.Cmd) {
 		"Ctrl+N", "Ctrl+L", "Ctrl+H", "Ctrl+S", "Alt+T", "Alt+F",
 		// Common words
 		"Cancel", "Confirm", "Yes", "No", "Error", "Success",
+		// Home page titles
+		"💡 WHAT IS TOTION?", "🎯 QUICK START GUIDE", "📝 CREATING NOTES",
+		"✏️  EDITING & FORMATTING", "📊 VIEWING & ANALYZING", "💾 SYNC & BACKUP",
+		"✨ WHY CHOOSE TOTION?",
+		// Home page descriptions
+		"Totion is a powerful terminal-based note-taking application that helps you:",
+		"Get started in seconds:",
+		// Home page bullet points - WHAT IS TOTION
+		"Capture ideas instantly without leaving your terminal workflow",
+		"Organize notes with notebooks, tags, and wiki-style links",
+		"Stay focused with distraction-free focus mode",
+		"Track your productivity with built-in analytics",
+		"Keep everything in sync with Git integration",
+		// QUICK START GUIDE bullets
+		"Create your first note", "View all your notes", "Open detailed help", "Quit application",
+		// CREATING NOTES bullets
+		"Create new note with custom name", "Daily journal (auto-dated)",
+		"Quick scratch pad (temporary notes)", "Use pre-made templates (meetings, todos, etc.)",
+		"Organize notes into notebooks", "Tag your notes for easy filtering",
+		"Change UI language (English, Spanish, French, etc.)",
+		// EDITING & FORMATTING bullets
+		"Save your work and close editor", "Enter focus mode (minimal distractions)",
+		"Pin important notes to top", "Create [[wiki links]] to other notes",
+		"Change color themes", "Search within notes",
+		// VIEWING & ANALYZING bullets
+		"Browse all notes in list view", "View statistics (note count, word count, trends)",
+		"Full-text search across all notes", "Open help menu anytime",
+		// SYNC & BACKUP bullets
+		"Export notes (HTML, PDF, Markdown)", "Import from Notion, Markdown, etc.",
+		"Git integration for version control", "Sync with cloud storage",
+		// WHY CHOOSE TOTION bullets
+		"Lightning fast - No loading times, instant startup",
+		"Privacy first - All data stored locally on your machine",
+		"Works offline - No internet required",
+		"Auto-save - Never lose your work",
+		"Keyboard driven - Maximum productivity",
+		"Markdown support - Beautiful formatting",
+		"Cross-platform - Works on Linux, Mac, Windows",
+		"TIP: Press Ctrl+H for complete documentation and tutorials",
+		// Scroll hints
+		"📜 Use ↑↓ arrow keys or mouse scroll to navigate • Page Up/Down for faster scrolling",
+		"📜 Use ↑↓ arrow keys or mouse scroll if content is not fully visible",
 	}
 	m.prewarmCache(commonStrings)
 
 	// Return to previous state
 	m.state = m.previousState
 
-	// Show appropriate status message
+	// Show appropriate status message with translation stats
 	if targetLang.Code == "en" {
-		m.statusMessage = styles.SuccessStyle.Render("✓ UI language set to English")
+		m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ UI language set to English"))
 	} else if m.lingoClient == nil || !m.lingoClient.IsEnabled() {
 		m.statusMessage = styles.WarningStyle.Render(
-			fmt.Sprintf("⚠ UI set to %s but translation unavailable - set LINGODOTDEV_API_KEY in .env file", targetLang.Name))
+			fmt.Sprintf(m.translate("⚠ UI set to %s but translation unavailable - set LINGODOTDEV_API_KEY in .env file"), targetLang.Name))
 	} else {
+		// Count cached translations
+		m.cacheMutex.RLock()
+		cacheSize := len(m.translationCache)
+		m.cacheMutex.RUnlock()
+
 		m.statusMessage = styles.SuccessStyle.Render(
-			fmt.Sprintf("✓ UI language set to %s - Translating interface...", targetLang.Name))
+			fmt.Sprintf(m.translate("✓ UI language set to %s - %d strings translated"), targetLang.Name, cacheSize))
 	}
 
 	return true, m, nil

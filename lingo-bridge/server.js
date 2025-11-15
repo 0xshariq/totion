@@ -36,6 +36,76 @@ const technicalGlossary = {
   'quick note': 'quick note',
 };
 
+// Preserve patterns - these should NOT be translated
+const shouldPreserve = (text) => {
+  // Keyboard shortcuts (Ctrl+X, Alt+Y, etc.)
+  if (/^(Ctrl|Alt|Shift|Esc|Enter|Tab|Space|\w)\+?[A-Z0-9]?$/i.test(text.trim())) {
+    return true;
+  }
+  
+  // File extensions
+  if (/^\.\w+$/.test(text.trim())) {
+    return true;
+  }
+  
+  // Wiki link syntax
+  if (/^\[\[.*\]\]$/.test(text.trim())) {
+    return true;
+  }
+  
+  // Code/command patterns
+  if (text.startsWith('$') || text.startsWith('./') || text.startsWith('npm ') || text.startsWith('git ')) {
+    return true;
+  }
+  
+  return false;
+};
+
+// Extract and protect parts that shouldn't be translated
+const protectText = (text) => {
+  const placeholders = [];
+  let protected = text;
+  
+  // Protect keyboard shortcuts like Ctrl+N, Alt+T
+  protected = protected.replace(/(Ctrl|Alt|Shift|Esc|Enter|Tab)(\+[A-Z0-9])?/gi, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect wiki links [[Note Name]]
+  protected = protected.replace(/\[\[[^\]]+\]\]/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect arrows and special symbols
+  protected = protected.replace(/→|←|↑|↓|✓|✗|•|📝|📋|📊|💡|🎯|✨|⚡|🔒|📁|🌐/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  // Protect file extensions
+  protected = protected.replace(/\.\w{2,4}(?=\s|$|\))/g, (match) => {
+    const placeholder = `__PRESERVE_${placeholders.length}__`;
+    placeholders.push(match);
+    return placeholder;
+  });
+  
+  return { protected, placeholders };
+};
+
+// Restore protected parts after translation
+const restoreText = (translated, placeholders) => {
+  let restored = translated;
+  placeholders.forEach((original, index) => {
+    restored = restored.replace(`__PRESERVE_${index}__`, original);
+  });
+  return restored;
+};
+
 // Detect context type for better translation accuracy
 const detectContext = (text) => {
   const lower = text.toLowerCase();
@@ -160,6 +230,11 @@ app.post('/translate', async (req, res) => {
       });
     }
 
+    // Don't translate if it should be preserved as-is
+    if (shouldPreserve(text)) {
+      return res.json({ translation: text, preserved: true });
+    }
+
     const source = sourceLocale || 'en';
     const cacheKey = getCacheKey(text, source, targetLocale);
     
@@ -168,6 +243,9 @@ app.post('/translate', async (req, res) => {
     if (cached) {
       return res.json({ translation: cached, cached: true });
     }
+
+    // Protect parts that shouldn't be translated (keyboard shortcuts, etc.)
+    const { protected: protectedText, placeholders } = protectText(text);
 
     // Detect or use provided context for better accuracy
     const translationContext = context || detectContext(text);
@@ -179,7 +257,7 @@ app.post('/translate', async (req, res) => {
     
     while (retries >= 0) {
       try {
-        result = await lingoDotDev.localizeText(text, {
+        result = await lingoDotDev.localizeText(protectedText, {
           sourceLocale: source,
           targetLocale,
           fast: fast === true, // Default to quality mode (false) for maximum accuracy
@@ -197,6 +275,9 @@ app.post('/translate', async (req, res) => {
         await new Promise(resolve => setTimeout(resolve, 100 * (3 - retries)));
       }
     }
+
+    // Restore protected parts
+    result = restoreText(result, placeholders);
 
     // Store in cache with long TTL for accuracy consistency
     await setCache(cacheKey, result, 604800); // 7 days
@@ -236,6 +317,12 @@ app.post('/translate/batch', async (req, res) => {
       
       // Process chunk in parallel for speed
       const chunkPromises = chunk.map(async (text) => {
+        // Don't translate if it should be preserved as-is
+        if (shouldPreserve(text)) {
+          cachedCount++; // Count as cached since no translation needed
+          return text;
+        }
+
         const cacheKey = getCacheKey(text, source, targetLocale);
         
         // Check cache first
@@ -245,13 +332,16 @@ app.post('/translate/batch', async (req, res) => {
           return cached;
         }
 
+        // Protect parts that shouldn't be translated
+        const { protected: protectedText, placeholders } = protectText(text);
+
         // Translate with context detection and retry logic
         const translationContext = detectContext(text);
         let retries = 2;
         
         while (retries >= 0) {
           try {
-            const result = await lingoDotDev.localizeText(text, {
+            let result = await lingoDotDev.localizeText(protectedText, {
               sourceLocale: source,
               targetLocale,
               fast: fast === true, // Default to quality mode for maximum accuracy
@@ -259,6 +349,9 @@ app.post('/translate/batch', async (req, res) => {
               preserveFormatting: true,
               glossary: technicalGlossary,
             });
+
+            // Restore protected parts
+            result = restoreText(result, placeholders);
 
             // Store in cache with 7-day TTL
             await setCache(cacheKey, result, 604800);

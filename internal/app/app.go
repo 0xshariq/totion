@@ -160,7 +160,7 @@ func New() *Model {
 				return err
 			}
 			m.isEditorDirty = false
-			m.statusMessage = styles.SuccessStyle.Render("✓ Auto-saved")
+			m.statusMessage = styles.SuccessStyle.Render(m.translate("✓ Auto-saved"))
 		}
 		return nil
 	})

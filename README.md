@@ -68,29 +68,29 @@ Here's what Totion looks like in action:
 
 The main hub with pinned notes, quick start guide, and all available features.
 
-![Totion Home Screen](app-images/totion-homepage.png)
+![Totion Home Screen](totion-demo/totion-homepage.png)
 
 ### Notes List
 
 Browse all your notes with easy navigation and search filtering.
 
-![Totion Notes List](app-images/totion-notes-list.png)
+![Totion Notes List](totion-demo/totion-notes-list.png)
 
 ### Editor
 
 Clean, distraction-free writing environment with auto-save and markdown support.
 
-![Totion Notes Editor](app-images/totion-notes-editor.png)
+![Totion Notes Editor](totion-demo/totion-notes-editor.png)
 
 ### Translation
 
-![Totion Translation](app-images/totion-translation.png)
+![Totion Translation](totion-demo/totion-translation.png)
 
 ### Help Menu
 
 Comprehensive help system with organized topics and easy navigation.
 
-![Totion Help Menu](app-images/totion-help-menu.png)
+![Totion Help Menu](totion-demo/totion-help-menu.png)
 
 ## �📦 Installation
 
