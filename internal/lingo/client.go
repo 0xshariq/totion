@@ -69,8 +69,8 @@ func (c *Client) waitForServer() error {
 		return nil // No bridge reference, assume ready
 	}
 
-	// Wait up to 3 seconds for server to be ready
-	maxWait := 30 // 30 x 100ms = 3 seconds max
+	// Wait up to 8 seconds for server to be ready (bridge can take time to start)
+	maxWait := 80 // 80 x 100ms = 8 seconds max
 	for i := 0; i < maxWait; i++ {
 		if c.bridgeServer.IsRunning() {
 			c.serverChecked = true
@@ -80,7 +80,7 @@ func (c *Client) waitForServer() error {
 	}
 
 	c.serverChecked = true // Don't keep checking
-	return fmt.Errorf("bridge server not ready after 3 seconds")
+	return fmt.Errorf("bridge server not ready after 8 seconds - check if Node.js is installed")
 }
 
 // IsEnabled returns true if the client has an API key configured

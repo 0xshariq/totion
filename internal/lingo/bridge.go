@@ -64,37 +64,31 @@ func (b *BridgeServer) StartAsync() error {
 		return fmt.Errorf("lingo-bridge directory not found at %s", bridgePath)
 	}
 
-	// Check if node_modules exists, if not install dependencies
+	// Check if node_modules exists
 	nodeModulesPath := filepath.Join(bridgePath, "node_modules")
 	if _, err := os.Stat(nodeModulesPath); os.IsNotExist(err) {
-		// Install in background - don't block
-		go func() {
-			// Try pnpm first, fallback to npm
-			installCmd := exec.Command("pnpm", "install")
+		// Install dependencies synchronously first time (needed for server to work)
+		installCmd := exec.Command("npm", "install", "--silent")
+		installCmd.Dir = bridgePath
+		if err := installCmd.Run(); err != nil {
+			// Try pnpm as fallback
+			installCmd = exec.Command("pnpm", "install", "--silent")
 			installCmd.Dir = bridgePath
-			installCmd.Stdout = nil
-			installCmd.Stderr = nil
 			if err := installCmd.Run(); err != nil {
-				// Fallback to npm
-				installCmd = exec.Command("npm", "install")
-				installCmd.Dir = bridgePath
-				installCmd.Stdout = nil
-				installCmd.Stderr = nil
-				_ = installCmd.Run()
+				return fmt.Errorf("failed to install dependencies: %w", err)
 			}
-		}()
+		}
 	}
 
-	// Start the bridge server in the background
-	// Try node first (faster startup than pnpm)
+	// Start the bridge server with node directly (fastest)
 	b.cmd = exec.Command("node", "server.js")
 	b.cmd.Dir = bridgePath
 	b.cmd.Stdout = nil
 	b.cmd.Stderr = nil
 
 	if err := b.cmd.Start(); err != nil {
-		// Fallback to pnpm
-		b.cmd = exec.Command("pnpm", "start")
+		// Fallback to npm/pnpm
+		b.cmd = exec.Command("npm", "start")
 		b.cmd.Dir = bridgePath
 		b.cmd.Stdout = nil
 		b.cmd.Stderr = nil
@@ -103,15 +97,12 @@ func (b *BridgeServer) StartAsync() error {
 		}
 	}
 
-	// Mark as starting (don't wait for it to be ready)
+	// Mark as starting
 	b.running = true
 
-	// Return immediately - server will be ready in ~1-2 seconds
-	// Translation requests will automatically wait for server to be ready
+	// Return immediately - translation requests will wait for readiness
 	return nil
-}
-
-// Stop stops the bridge server
+} // Stop stops the bridge server
 func (b *BridgeServer) Stop() error {
 	if !b.running || b.cmd == nil || b.cmd.Process == nil {
 		return nil // Not running
