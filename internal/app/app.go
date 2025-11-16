@@ -217,10 +217,33 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if handled {
 			return newModel, newCmd
 		}
-		// If not handled globally, pass to active component
+		// If not handled globally, pass to active component based on state
+		switch m.state {
+		case ViewHome:
+			// Allow viewport scrolling in home view
+			m.homeViewport, cmd = m.homeViewport.Update(msg)
+		case ViewHelp:
+			// Allow viewport scrolling in help view
+			m.helpViewport, cmd = m.helpViewport.Update(msg)
+		case ViewTemplates, ViewThemes, ViewExport, ViewImport, ViewStats, ViewGit, ViewSync, ViewNotebooks:
+			// Allow viewport scrolling in content views
+			m.contentViewport, cmd = m.contentViewport.Update(msg)
+		case ViewList:
+			m.list, cmd = m.list.Update(msg)
+		case ViewEditor:
+			// In editor mode, let the editor handle the key
+			m.editor, cmd = m.editor.Update(msg)
+			// Mark as dirty when content changes (any key that wasn't handled globally)
+			m.isEditorDirty = true
+		case ViewNewFile, ViewNoteNameInNotebook:
+			m.fileNameInput, cmd = m.fileNameInput.Update(msg)
+		case ViewNotebookNameInput:
+			m.notebookNameInput, cmd = m.notebookNameInput.Update(msg)
+		}
+		return m, cmd
 	}
 
-	// Update active component based on state
+	// Update active component based on state for non-key messages
 	switch m.state {
 	case ViewHome:
 		// Allow viewport scrolling in home view
