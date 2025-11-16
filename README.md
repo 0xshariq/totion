@@ -109,6 +109,10 @@ Comprehensive help system with organized topics and easy navigation.
 
 ```bash
 go install github.com/0xshariq/totion
+
+cd totion
+
+make run
 ```
 
 ### Install wkhtmltopdf
