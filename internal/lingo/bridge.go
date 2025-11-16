@@ -39,12 +39,18 @@ func (b *BridgeServer) GetURL() string {
 	return fmt.Sprintf("http://localhost:%d", b.port)
 }
 
-// Start starts the bridge server if it's not already running
+// Start starts the bridge server if it's not already running (DEPRECATED - use StartAsync)
 func (b *BridgeServer) Start() error {
-	// Check if already running
+	return b.StartAsync()
+}
+
+// StartAsync starts the bridge server asynchronously - returns immediately
+// The server starts in the background and becomes available within 1-2 seconds
+func (b *BridgeServer) StartAsync() error {
+	// Quick check if already running (fast, non-blocking)
 	if b.IsRunning() {
 		b.running = true
-		return nil // Already running, nothing to do
+		return nil
 	}
 
 	// Find the bridge server directory
@@ -61,66 +67,48 @@ func (b *BridgeServer) Start() error {
 	// Check if node_modules exists, if not install dependencies
 	nodeModulesPath := filepath.Join(bridgePath, "node_modules")
 	if _, err := os.Stat(nodeModulesPath); os.IsNotExist(err) {
-		fmt.Println("Installing bridge server dependencies...")
-		// Try pnpm first, fallback to npm
-		installCmd := exec.Command("pnpm", "install")
-		installCmd.Dir = bridgePath
-		// Suppress install output
-		installCmd.Stdout = nil
-		installCmd.Stderr = nil
-		if err := installCmd.Run(); err != nil {
-			// Fallback to npm
-			installCmd = exec.Command("npm", "install")
+		// Install in background - don't block
+		go func() {
+			// Try pnpm first, fallback to npm
+			installCmd := exec.Command("pnpm", "install")
 			installCmd.Dir = bridgePath
 			installCmd.Stdout = nil
 			installCmd.Stderr = nil
 			if err := installCmd.Run(); err != nil {
-				return fmt.Errorf("failed to install bridge dependencies: %w", err)
+				// Fallback to npm
+				installCmd = exec.Command("npm", "install")
+				installCmd.Dir = bridgePath
+				installCmd.Stdout = nil
+				installCmd.Stderr = nil
+				_ = installCmd.Run()
 			}
-		}
-		fmt.Println("✓ Dependencies installed")
+		}()
 	}
 
 	// Start the bridge server in the background
-	// Try pnpm first, fallback to node
-	b.cmd = exec.Command("pnpm", "start")
+	// Try node first (faster startup than pnpm)
+	b.cmd = exec.Command("node", "server.js")
 	b.cmd.Dir = bridgePath
-
-	// Suppress output - redirect to null device
 	b.cmd.Stdout = nil
 	b.cmd.Stderr = nil
 
 	if err := b.cmd.Start(); err != nil {
-		// Fallback to direct node command
-		b.cmd = exec.Command("node", "server.js")
+		// Fallback to pnpm
+		b.cmd = exec.Command("pnpm", "start")
 		b.cmd.Dir = bridgePath
 		b.cmd.Stdout = nil
 		b.cmd.Stderr = nil
-
 		if err := b.cmd.Start(); err != nil {
 			return fmt.Errorf("failed to start bridge server: %w", err)
 		}
 	}
 
-	// Wait for server to be ready (max 10 seconds)
-	maxRetries := 40 // Increased for slower systems
-	retryDelay := 250 * time.Millisecond
+	// Mark as starting (don't wait for it to be ready)
+	b.running = true
 
-	for i := 0; i < maxRetries; i++ {
-		time.Sleep(retryDelay)
-		if b.IsRunning() {
-			b.running = true
-			// Silently started - no console output
-			return nil // Server is ready
-		}
-	}
-
-	// Server failed to start - try to kill the process
-	if b.cmd != nil && b.cmd.Process != nil {
-		_ = b.cmd.Process.Kill()
-	}
-
-	return fmt.Errorf("bridge server failed to start in time (waited %d seconds)", maxRetries*int(retryDelay.Seconds()))
+	// Return immediately - server will be ready in ~1-2 seconds
+	// Translation requests will automatically wait for server to be ready
+	return nil
 }
 
 // Stop stops the bridge server

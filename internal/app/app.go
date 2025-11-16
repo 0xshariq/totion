@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"sync"
@@ -120,18 +121,20 @@ func New() *Model {
 		lingoAPIKey = os.Getenv("LINGO_API_KEY")
 	}
 
-	// Initialize and start Lingo.dev bridge server
+	// Initialize bridge server (don't start yet - lazy load when needed)
 	bridgeServer := lingo.NewBridgeServer()
+
+	// Start bridge server asynchronously in background if API key is configured
 	if lingoAPIKey != "" {
-		// Only start bridge if API key is configured
-		if err := bridgeServer.Start(); err != nil {
-			// Log error but don't fail - app can still work without translation
-			// fmt.Fprintf(os.Stderr, "Warning: Failed to start Lingo.dev bridge: %v\n", err)
-		}
+		go func() {
+			// Start in background - won't block app startup
+			_ = bridgeServer.StartAsync()
+		}()
 	}
 
 	// Initialize Lingo.dev client with API key
 	lingoClient := lingo.NewClient(lingoAPIKey)
+	lingoClient.SetBridgeServer(bridgeServer) // Connect client to bridge for smart waiting
 
 	m := &Model{
 		storage:           storage.New(),
@@ -298,34 +301,48 @@ func (m *Model) translate(text string) string {
 
 	// Translate using Lingo.dev API with timeout protection
 	// Use quality mode (fast=false) for hackathon accuracy requirement (>90%)
-	done := make(chan string, 1)
+	type result struct {
+		text string
+		err  error
+	}
+	done := make(chan result, 1)
 	go func() {
 		// Quality mode: fast=false ensures high accuracy translation
 		translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, false)
-		if err != nil {
-			done <- text
-		} else {
-			done <- translated
-		}
+		done <- result{text: translated, err: err}
 	}()
 
 	// Wait for translation with very short timeout to prevent ANY UI freezing
 	// If translation takes longer, continue in background and show result on next render
 	select {
-	case result := <-done:
+	case res := <-done:
+		if res.err != nil {
+			// Store error for display in status (only first error)
+			if m.err == nil {
+				m.err = fmt.Errorf("Translation error: %v", res.err)
+			}
+			return text
+		}
 		// Cache the result for instant future use
 		m.cacheMutex.Lock()
-		m.translationCache[cacheKey] = result
+		m.translationCache[cacheKey] = res.text
 		m.cacheMutex.Unlock()
-		return result
+		return res.text
 	case <-time.After(300 * time.Millisecond):
 		// Timeout - continue translation in background, return English temporarily
 		// Background goroutine will cache result for next render
 		go func() {
 			// Wait for background translation to complete and cache it
-			result := <-done
+			res := <-done
+			if res.err != nil {
+				// Store error for display in status (only first error)
+				if m.err == nil {
+					m.err = fmt.Errorf("Translation error: %v", res.err)
+				}
+				return
+			}
 			m.cacheMutex.Lock()
-			m.translationCache[cacheKey] = result
+			m.translationCache[cacheKey] = res.text
 			m.cacheMutex.Unlock()
 		}()
 		return text
@@ -369,6 +386,10 @@ func (m *Model) prewarmCache(strings []string) {
 	go func() {
 		translations, err := m.lingoClient.BatchTranslateTexts(untranslated, "en", m.currentUILanguage, false)
 		if err != nil {
+			// Store error for display in status
+			if m.err == nil {
+				m.err = fmt.Errorf("Batch translation error: %v", err)
+			}
 			// Fallback to sequential if batch fails
 			for _, text := range untranslated {
 				translated, err := m.lingoClient.TranslateText(text, "en", m.currentUILanguage, false)

@@ -12,9 +12,11 @@ import (
 // Client handles communication with Lingo.dev via bridge server
 // The bridge server uses the official Lingo.dev JavaScript SDK
 type Client struct {
-	apiKey     string
-	baseURL    string
-	httpClient *http.Client
+	apiKey        string
+	baseURL       string
+	httpClient    *http.Client
+	bridgeServer  *BridgeServer // Reference to bridge server for smart waiting
+	serverChecked bool          // Track if we've checked server readiness
 }
 
 // Response represents the API response structure
@@ -45,9 +47,40 @@ func NewClient(apiKey string) *Client {
 		apiKey:  apiKey,
 		baseURL: bridgeURL,
 		httpClient: &http.Client{
-			Timeout: 2 * time.Second, // Short timeout to prevent UI freezing
+			Timeout: 5 * time.Second, // Increased slightly for reliability
 		},
+		serverChecked: false,
 	}
+}
+
+// SetBridgeServer sets the bridge server reference for smart waiting
+func (c *Client) SetBridgeServer(bridge *BridgeServer) {
+	c.bridgeServer = bridge
+}
+
+// waitForServer waits for the bridge server to be ready (only called on first translation)
+func (c *Client) waitForServer() error {
+	if c.serverChecked {
+		return nil // Already checked
+	}
+
+	if c.bridgeServer == nil {
+		c.serverChecked = true
+		return nil // No bridge reference, assume ready
+	}
+
+	// Wait up to 3 seconds for server to be ready
+	maxWait := 30 // 30 x 100ms = 3 seconds max
+	for i := 0; i < maxWait; i++ {
+		if c.bridgeServer.IsRunning() {
+			c.serverChecked = true
+			return nil
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+
+	c.serverChecked = true // Don't keep checking
+	return fmt.Errorf("bridge server not ready after 3 seconds")
 }
 
 // IsEnabled returns true if the client has an API key configured
@@ -72,6 +105,11 @@ func (c *Client) TranslateText(text, sourceLocale, targetLocale string, fast boo
 	// Validate language codes
 	if len(targetLocale) < 2 {
 		return text, fmt.Errorf("invalid target locale: %s", targetLocale)
+	}
+
+	// Wait for server to be ready (only on first call, then cached)
+	if err := c.waitForServer(); err != nil {
+		return text, err
 	}
 
 	payload := map[string]interface{}{
@@ -165,6 +203,11 @@ func (c *Client) BatchTranslateTexts(texts []string, sourceLocale, targetLocale 
 	// Validate language codes
 	if len(targetLocale) < 2 {
 		return nil, fmt.Errorf("invalid target locale: %s", targetLocale)
+	}
+
+	// Wait for server to be ready (only on first call, then cached)
+	if err := c.waitForServer(); err != nil {
+		return nil, err
 	}
 
 	payload := map[string]any{

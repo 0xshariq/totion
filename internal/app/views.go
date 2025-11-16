@@ -454,6 +454,18 @@ func (m *Model) View() string {
 		status = "\n\n" + m.statusMessage
 	}
 
+	// Display translation errors at the bottom if any
+	if m.err != nil {
+		errMsg := styles.ErrorStyle.Render(fmt.Sprintf("⚠ %v", m.err))
+		if status != "" {
+			status = status + "\n" + errMsg
+		} else {
+			status = "\n\n" + errMsg
+		}
+		// Clear error after displaying once
+		m.err = nil
+	}
+
 	// Build final view
 	return fmt.Sprintf("\n%s\n\n%s%s%s", header, view, keysSection, status)
 }

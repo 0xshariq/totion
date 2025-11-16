@@ -184,13 +184,13 @@ const detectContext = (text) => {
 let redis = null;
 let memoryCache = new Map();
 
-// Initialize Redis connection
+// Initialize Redis connection (async, non-blocking)
 const initRedis = async () => {
   try {
     const client = createClient({
       url: process.env.REDIS_URL || 'redis://localhost:6379',
       socket: {
-        connectTimeout: 2000,
+        connectTimeout: 500, // Reduced to 500ms for faster startup
         reconnectStrategy: false // Don't retry connection
       }
     });
@@ -200,23 +200,22 @@ const initRedis = async () => {
       // Ignore errors, fallback to memory cache
     });
 
-    // Connect to Redis with timeout
+    // Connect to Redis with fast timeout (500ms)
     await Promise.race([
       client.connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 500))
     ]);
     
     // Connection successful
     redis = client;
-    // Silently connected - no console output
   } catch (error) {
-    // Silently fall back to memory cache
+    // Silently fall back to memory cache (instant)
     redis = null;
   }
 };
 
-// Try to connect to Redis
-initRedis();
+// Try to connect to Redis in background (don't block server startup)
+initRedis().catch(() => {});
 
 // Cache helper function
 const getCacheKey = (text, sourceLang, targetLang) => {
@@ -266,6 +265,8 @@ app.post('/translate', async (req, res) => {
   try {
     const { text, sourceLocale, targetLocale, fast, context } = req.body;
 
+    console.log(`[TRANSLATE] ${sourceLocale} → ${targetLocale}: "${text.substring(0, 50)}${text.length > 50 ? '...' : ''}"`);
+
     if (!text || !targetLocale) {
       return res.status(400).json({ 
         error: 'Missing required fields: text and targetLocale' 
@@ -283,8 +284,11 @@ app.post('/translate', async (req, res) => {
     // Check cache first
     const cached = await getFromCache(cacheKey);
     if (cached) {
+      console.log(`  ✓ Cache hit`);
       return res.json({ translation: cached, cached: true });
     }
+
+    console.log(`  → Translating...`);
 
     // Protect parts that shouldn't be translated (keyboard shortcuts, etc.)
     const { protected: protectedText, placeholders } = protectText(text);
@@ -326,6 +330,8 @@ app.post('/translate', async (req, res) => {
 
     // Store in cache with long TTL for accuracy consistency
     await setCache(cacheKey, result, 604800); // 7 days
+
+    console.log(`  ✓ Translated: "${result.substring(0, 50)}${result.length > 50 ? '...' : ''}"`);
 
     res.json({ translation: result, cached: false, context: translationContext });
   } catch (error) {
@@ -466,14 +472,8 @@ app.post('/cache/clear', async (req, res) => {
 
 const PORT = process.env.LINGO_BRIDGE_PORT || 3737;
 
+// Start server immediately without blocking
 app.listen(PORT, () => {
-  console.log(`🌐 Lingo.dev Bridge Server running on http://localhost:${PORT}`);
-  console.log(`✓ API Key configured: ${!!process.env.LINGODOTDEV_API_KEY}`);
-  console.log(`✓ Redis caching enabled`);
-  console.log(`\nEndpoints:`);
-  console.log(`  GET  /health             - Health check`);
-  console.log(`  POST /translate          - Translate text (cached)`);
-  console.log(`  POST /translate/batch    - Batch translate multiple texts`);
-  console.log(`  GET  /cache/stats        - Cache statistics`);
-  console.log(`  POST /cache/clear        - Clear cache`);
+  // Log startup for debugging
+  console.log(`✓ Bridge server ready on :${PORT}`);
 });
